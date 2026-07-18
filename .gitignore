@@ -1,0 +1,26 @@
+# ── Key material — NEVER commit ────────────────────────────────────────────
+# Solana keypairs are secrets even on devnet. Keys come from $SOL_OPERATOR_KEY.
+*keypair*.json
+*-devnet.json
+*-mainnet.json
+id.json
+*.pem
+*.key
+.env
+.env.*
+
+# ── Build artifacts ────────────────────────────────────────────────────────
+/gate/gate
+/settle/settle
+/settle/sol-pay
+**/target/
+node_modules/
+dist/
+*.so
+*.test
+
+# ── OS / editor ────────────────────────────────────────────────────────────
+.DS_Store
+*.swp
+.idea/
+.vscode/
