@@ -1,0 +1,112 @@
+<svg viewBox="0 0 1240 720" xmlns="http://www.w3.org/2000/svg" font-family="Inter, Segoe UI, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#C77DFF"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#4ADE80"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#F87171"/>
+    </marker>
+    <style>
+      .title { font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; }
+      .lbl { fill:#F8F8FF; }
+      .mut { fill:#A09AB8; }
+      .sm  { font-size:13px; }
+      .xs  { font-size:11.5px; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1240" height="720" fill="#0A0612"/>
+
+  <!-- Title -->
+  <text x="40" y="52" class="title lbl" font-size="27">SPT-Txn × x402 on Solana</text>
+  <text x="40" y="78" class="mut sm">x402 moves the money · SPT-Txn proves the agent was allowed to — offline, per-transaction, human-anchored</text>
+
+  <!-- 1. Agent -->
+  <rect x="40" y="120" width="180" height="120" rx="12" fill="#16102A" stroke="#7B2FBE" stroke-width="1.5"/>
+  <text x="130" y="165" text-anchor="middle" class="title lbl" font-size="16">AI Agent</text>
+  <text x="130" y="188" text-anchor="middle" class="mut xs">(payer, on behalf</text>
+  <text x="130" y="204" text-anchor="middle" class="mut xs">of a human)</text>
+
+  <!-- 2. x402 resource server -->
+  <rect x="290" y="120" width="210" height="120" rx="12" fill="#16102A" stroke="#7B2FBE" stroke-width="1.5"/>
+  <text x="395" y="160" text-anchor="middle" class="title lbl" font-size="15">x402 Resource</text>
+  <text x="395" y="182" text-anchor="middle" class="lbl xs">HTTP 402 Payment Required</text>
+  <text x="395" y="202" text-anchor="middle" class="mut xs">price · pay-to · resource</text>
+  <text x="395" y="220" text-anchor="middle" class="mut xs">(via facilitator)</text>
+
+  <!-- arrows agent<->x402 -->
+  <line x1="220" y1="170" x2="288" y2="170" stroke="#C77DFF" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="160" text-anchor="middle" class="mut xs">GET</text>
+  <line x1="288" y1="205" x2="222" y2="205" stroke="#C77DFF" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="225" text-anchor="middle" class="mut xs">402</text>
+
+  <!-- 3. SPT-Txn authorization layer (the star) -->
+  <rect x="560" y="96" width="360" height="300" rx="16" fill="#1E1140" stroke="#9D4EDD" stroke-width="2.5"/>
+  <text x="740" y="128" text-anchor="middle" class="title" font-size="17" fill="#E0AAFF">SPT-Txn Authorization Layer</text>
+  <text x="740" y="149" text-anchor="middle" class="mut xs">deny-by-default · fail-closed · no call home</text>
+
+  <!-- mint chain -->
+  <rect x="586" y="166" width="308" height="58" rx="9" fill="#16102A" stroke="#7B2FBE" stroke-width="1.2"/>
+  <text x="740" y="190" text-anchor="middle" class="lbl sm">Mint  CAT → CT → SPT-Txn</text>
+  <text x="740" y="210" text-anchor="middle" class="mut xs">bound to THIS payment (amount · pay-to · resource)</text>
+
+  <!-- verifier -->
+  <rect x="586" y="236" width="308" height="70" rx="9" fill="#16102A" stroke="#7B2FBE" stroke-width="1.2"/>
+  <text x="740" y="260" text-anchor="middle" class="lbl sm">8-step offline verifier</text>
+  <text x="740" y="279" text-anchor="middle" class="mut xs">scope ⊆ ceiling · attenuation monotonic</text>
+  <text x="740" y="295" text-anchor="middle" class="mut xs">TTL · nonce · revocation · human anchor</text>
+
+  <!-- decision -->
+  <rect x="586" y="320" width="150" height="56" rx="9" fill="#0E2A18" stroke="#4ADE80" stroke-width="1.5"/>
+  <text x="661" y="344" text-anchor="middle" class="title sm" fill="#4ADE80">ALLOW</text>
+  <text x="661" y="363" text-anchor="middle" class="mut xs">in scope</text>
+
+  <rect x="744" y="320" width="150" height="56" rx="9" fill="#2A0E12" stroke="#F87171" stroke-width="1.5"/>
+  <text x="819" y="344" text-anchor="middle" class="title sm" fill="#F87171">DENY</text>
+  <text x="819" y="363" text-anchor="middle" class="mut xs">over-scope / expired</text>
+
+  <!-- inputs to the layer (left, from below agent) -->
+  <rect x="40" y="300" width="480" height="96" rx="12" fill="#120C24" stroke="#3A2A5A" stroke-width="1.2"/>
+  <text x="60" y="326" class="mut xs" font-weight="700" fill="#C77DFF">INPUTS (no ambient authority)</text>
+  <text x="60" y="349" class="lbl xs">• Capability ceiling — max this agent may ever spend</text>
+  <text x="60" y="368" class="lbl xs">• Human anchor — zero-knowledge commitment to the accountable person</text>
+  <text x="60" y="387" class="lbl xs">• Jurisdiction / policy floor (e.g. FATF Travel Rule)</text>
+  <line x1="395" y1="240" x2="395" y2="298" stroke="#C77DFF" stroke-width="2.5" stroke-dasharray="7 4"/>
+  <line x1="520" y1="330" x2="584" y2="250" stroke="#9D4EDD" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- DENY output -->
+  <line x1="819" y1="378" x2="819" y2="470" stroke="#F87171" stroke-width="2" marker-end="url(#arrowRed)"/>
+  <rect x="700" y="472" width="240" height="66" rx="10" fill="#2A0E12" stroke="#F87171" stroke-width="1.2"/>
+  <text x="820" y="500" text-anchor="middle" class="lbl sm">Agent must NOT sign</text>
+  <text x="820" y="520" text-anchor="middle" class="mut xs">+ signed evidence record: why denied</text>
+
+  <!-- ALLOW output down to Solana -->
+  <line x1="661" y1="378" x2="661" y2="470" stroke="#4ADE80" stroke-width="2" marker-end="url(#arrowGreen)"/>
+
+  <!-- 4. Solana settlement -->
+  <rect x="360" y="472" width="300" height="150" rx="14" fill="#16102A" stroke="#4ADE80" stroke-width="1.8"/>
+  <text x="510" y="502" text-anchor="middle" class="title lbl" font-size="15">Solana Settlement</text>
+  <text x="510" y="524" text-anchor="middle" class="lbl xs">USDC / SOL transfer</text>
+  <text x="510" y="543" text-anchor="middle" class="lbl xs">+ human anchor on-chain (SPL Memo)</text>
+  <text x="510" y="566" text-anchor="middle" class="mut xs">devnet by default · mainnet gated</text>
+  <text x="510" y="596" text-anchor="middle" class="mut xs" fill="#C77DFF">no PII on the ledger</text>
+  <line x1="659" y1="500" x2="662" y2="500" stroke="#4ADE80" stroke-width="2"/>
+  <path d="M661,470 C661,486 640,486 600,486" fill="none" stroke="#4ADE80" stroke-width="2" marker-end="url(#arrowGreen)"/>
+
+  <!-- 5. Receipt / transparency -->
+  <rect x="960" y="166" width="240" height="140" rx="12" fill="#16102A" stroke="#7B2FBE" stroke-width="1.5"/>
+  <text x="1080" y="196" text-anchor="middle" class="title lbl" font-size="14">Signed Receipt</text>
+  <text x="1080" y="220" text-anchor="middle" class="mut xs">emitted at the moment</text>
+  <text x="1080" y="236" text-anchor="middle" class="mut xs">of decision — byproduct,</text>
+  <text x="1080" y="252" text-anchor="middle" class="mut xs">not an afterthought</text>
+  <text x="1080" y="278" text-anchor="middle" class="lbl xs">→ append-only Merkle log</text>
+  <text x="1080" y="295" text-anchor="middle" class="mut xs">(optional on-chain root anchor)</text>
+  <line x1="894" y1="236" x2="958" y2="236" stroke="#C77DFF" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Footer legend -->
+  <text x="40" y="660" class="mut xs">Built on the open SPT-Txn reference implementation · IETF draft-coetzee-oauth-spt-txn-tokens · Apache-2.0</text>
+  <text x="40" y="682" class="mut xs" fill="#C77DFF">Option 1 (this diagram): off-chain verify, on-chain settle — proven on devnet.  Option 2: Anchor program enforces the proof on-chain.</text>
+</svg>
