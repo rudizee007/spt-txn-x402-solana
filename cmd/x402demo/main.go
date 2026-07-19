@@ -52,13 +52,16 @@ func main() {
 	pricey := demo.NewResourceServer(acc, 10_000_000, "https://api.example.com/premium")
 	tsHi := httptest.NewServer(demo.NewHTTPHandler(pricey))
 	defer tsHi.Close()
-	c2 := demo.NewHTTPClient(acc, scope)
 	t2 := gate.Token{Nonce: seed(0x6B), Expiry: now.Add(time.Minute)}
-	o, _ = c2.Pay(tsHi.URL+"/resource", t2, now, false)
+	o, _ = c.Pay(tsHi.URL+"/resource", t2, now, false)
 	fmt.Printf("[3] GET over-scope   -> %-15s %s\n", o.Decision, o.Reason)
 
-	c3 := demo.NewHTTPClient(acc, scope)
 	t3 := gate.Token{Nonce: seed(0x7C), Expiry: now.Add(time.Minute)}
-	o, _ = c3.Pay(url, t3, now, true)
+	o, _ = c.Pay(url, t3, now, true)
 	fmt.Printf("[4] GET tampered     -> %-15s aborted-before-sign=%-5v %s\n", o.Decision, o.AbortedBeforeSign, o.Reason)
+
+	// Evidence: every decision above emitted a signed, chained receipt.
+	root := c.ReceiptRoot()
+	fmt.Printf("\nevidence: %d signed receipts, merkle root %x\n", c.ReceiptCount(), root)
+	fmt.Println("          anchor it on devnet with:  go run -tags devnet ./cmd/anchordevnet")
 }

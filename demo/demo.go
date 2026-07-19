@@ -11,6 +11,7 @@
 package demo
 
 import (
+	"crypto/ed25519"
 	"encoding/binary"
 	"errors"
 	"math/big"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/rudizee007/spt-txn-x402-solana/gate"
+	"github.com/rudizee007/spt-txn-x402-solana/receipt"
 	"github.com/rudizee007/spt-txn-x402-solana/settle"
 )
 
@@ -178,15 +180,33 @@ type Outcome struct {
 
 // Client runs the payer side of the loop.
 type Client struct {
-	acc   Accounts
-	scope Scope
-	spend gate.SpendLog
+	acc      Accounts
+	scope    Scope
+	spend    gate.SpendLog
+	receipts *receipt.Log
+	rkey     ed25519.PrivateKey
 }
 
-// NewClient builds a payer with the given scope and a fresh single-use log.
+// NewClient builds a payer with the given scope, a fresh single-use log, and a
+// fresh receipt-signing key (distinct from any payment key).
 func NewClient(acc Accounts, scope Scope) *Client {
-	return &Client{acc: acc, scope: scope, spend: gate.NewMemSpendLog()}
+	_, rkey, _ := ed25519.GenerateKey(nil)
+	rpub := rkey.Public().(ed25519.PublicKey)
+	return &Client{
+		acc:      acc,
+		scope:    scope,
+		spend:    gate.NewMemSpendLog(),
+		receipts: receipt.NewLog(rpub),
+		rkey:     rkey,
+	}
 }
+
+// ReceiptRoot is the RFC 6962 Merkle root over every decision this client has
+// made — the value you would anchor on-chain (see cmd/anchordevnet).
+func (c *Client) ReceiptRoot() [32]byte { return c.receipts.Root() }
+
+// ReceiptCount is the number of decisions recorded.
+func (c *Client) ReceiptCount() int { return c.receipts.Len() }
 
 // Pay runs one full loop against server with the given token. If tamper is true
 // the built transfer is redirected to the attacker, to demonstrate the §6.4
@@ -196,6 +216,8 @@ func (c *Client) Pay(server *ResourceServer, token gate.Token, now time.Time, ta
 
 	// Gate: ALLOW/DENY before signing.
 	d := gate.Evaluate(c.acc.allowlist(), req, token, ScopePolicy{scope: c.scope}, c.spend, now)
+	// Evidence as a byproduct: every decision emits a signed, chained receipt.
+	_, _ = c.receipts.Append(c.rkey, receipt.Decision(d.Class), d.Binding, now.Unix())
 	if d.Class != gate.Allow {
 		return Outcome{Decision: d.Class, Reason: d.Reason}
 	}

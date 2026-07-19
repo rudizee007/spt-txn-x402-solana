@@ -7,6 +7,7 @@ package demo
 // gate.Evaluate and settle.AssertTransactionPays — only the transport is new.
 
 import (
+	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/rudizee007/spt-txn-x402-solana/gate"
+	"github.com/rudizee007/spt-txn-x402-solana/receipt"
 	"github.com/rudizee007/spt-txn-x402-solana/settle"
 )
 
@@ -186,16 +188,33 @@ func write402(w http.ResponseWriter, server *ResourceServer, msg string) {
 // HTTPClient runs the payer side of the x402 flow over HTTP, reusing the same
 // gate + settle enforcement as the in-process demo.
 type HTTPClient struct {
-	acc    Accounts
-	scope  Scope
-	spend  gate.SpendLog
-	client *http.Client
+	acc      Accounts
+	scope    Scope
+	spend    gate.SpendLog
+	client   *http.Client
+	receipts *receipt.Log
+	rkey     ed25519.PrivateKey
 }
 
-// NewHTTPClient builds a payer with a fresh single-use log.
+// NewHTTPClient builds a payer with a fresh single-use log and receipt-signing key.
 func NewHTTPClient(acc Accounts, scope Scope) *HTTPClient {
-	return &HTTPClient{acc: acc, scope: scope, spend: gate.NewMemSpendLog(), client: &http.Client{}}
+	_, rkey, _ := ed25519.GenerateKey(nil)
+	rpub := rkey.Public().(ed25519.PublicKey)
+	return &HTTPClient{
+		acc:      acc,
+		scope:    scope,
+		spend:    gate.NewMemSpendLog(),
+		client:   &http.Client{},
+		receipts: receipt.NewLog(rpub),
+		rkey:     rkey,
+	}
 }
+
+// ReceiptRoot is the Merkle root over every decision this client has made.
+func (c *HTTPClient) ReceiptRoot() [32]byte { return c.receipts.Root() }
+
+// ReceiptCount is the number of decisions recorded.
+func (c *HTTPClient) ReceiptCount() int { return c.receipts.Len() }
 
 // Pay performs GET → 402 → gate → settle → X-PAYMENT retry → 200 against url.
 // tamper redirects the built transfer to the attacker, demonstrating the settle
@@ -221,6 +240,8 @@ func (c *HTTPClient) Pay(url string, token gate.Token, now time.Time, tamper boo
 
 	// 2. Gate: ALLOW / DENY before signing.
 	d := gate.Evaluate(c.acc.allowlist(), req, token, ScopePolicy{scope: c.scope}, c.spend, now)
+	// Evidence as a byproduct: every decision emits a signed, chained receipt.
+	_, _ = c.receipts.Append(c.rkey, receipt.Decision(d.Class), d.Binding, now.Unix())
 	if d.Class != gate.Allow {
 		return Outcome{Decision: d.Class, Reason: d.Reason}, nil
 	}
