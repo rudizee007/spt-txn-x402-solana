@@ -131,16 +131,26 @@ func main() {
 		fmt.Printf("\n[tamper] building transfer to %s\n", buildDest)
 		fmt.Printf("[tamper] but the bound recipient is        %s\n", destATA)
 	}
-	ix := token.NewTransferCheckedInstruction(
+	transferIx := token.NewTransferCheckedInstruction(
 		*amount, settle.USDCDecimals,
 		sourceATA, usdcMint, buildDest, payerPub,
 		nil, // no multisig signers
 	).Build()
 
-	// 5. §6.4 pre-send gate: decode the ACTUAL instruction and assert it pays the
-	//    bound recipient / asset / amount under the payer's authority. Refuse to
-	//    sign on any mismatch.
-	if err := assertBound(ix, destATA, usdcMint, payerPub, *amount); err != nil {
+	// When paying a distinct merchant, prepend an idempotent create of their USDC
+	// token account so a brand-new recipient just works. It is a no-op if the ATA
+	// already exists, and it is an ATA-program instruction — not a TransferChecked
+	// — so the guard still sees exactly one transfer.
+	var ixs []solana.Instruction
+	if *toStr != "" && merchant != payerPub {
+		ixs = append(ixs, createATAIdempotent(payerPub, destATA, merchant, usdcMint))
+	}
+	ixs = append(ixs, transferIx)
+
+	// 5. §6.4 pre-send gate: decode the ACTUAL transaction and assert exactly one
+	//    TransferChecked pays the bound recipient / asset / amount under the payer's
+	//    authority. Refuse to sign on any mismatch.
+	if err := assertBoundTx(ixs, destATA, usdcMint, payerPub, *amount); err != nil {
 		log.Fatalf("REFUSING TO SIGN — settle guard rejected the transfer: %v", err)
 	}
 
@@ -150,7 +160,7 @@ func main() {
 		log.Fatalf("get blockhash: %v", err)
 	}
 	tx, err := solana.NewTransaction(
-		[]solana.Instruction{ix},
+		ixs,
 		recent.Value.Blockhash,
 		solana.TransactionPayer(payerPub),
 	)
@@ -183,33 +193,75 @@ func main() {
 	fmt.Printf("  tx:       https://explorer.solana.com/tx/%s?cluster=devnet\n", sig)
 }
 
-// assertBound decodes the real instruction into the settle representation and
-// runs the §6.4 assertion against it — the guard inspects the exact bytes that
-// would be signed, not a stand-in.
-func assertBound(ix solana.Instruction, destATA, mint, payer solana.PublicKey, amount uint64) error {
-	data, err := ix.Data()
+// assertBoundTx decodes the real transaction into the settle representation and
+// runs the §6.4 assertion: exactly one TransferChecked, paying the bound
+// recipient / asset / amount under the payer's authority. The guard inspects the
+// exact bytes that would be signed.
+func assertBoundTx(ixs []solana.Instruction, destATA, mint, payer solana.PublicKey, amount uint64) error {
+	sixs, err := toSettleIxs(ixs)
 	if err != nil {
 		return err
-	}
-	accounts := ix.Accounts()
-	accts := make([][32]byte, len(accounts))
-	for i, m := range accounts {
-		accts[i] = [32]byte(m.PublicKey)
-	}
-	si := settle.Instruction{
-		ProgramID: [32]byte(ix.ProgramID()),
-		Data:      data,
-		Accounts:  accts,
 	}
 	dec := settle.Decoder{TokenPrograms: [][32]byte{settle.SPLTokenProgramID}}
-	tr, err := dec.FindTransfer([]settle.Instruction{si})
-	if err != nil {
-		return err
-	}
-	return settle.AssertMatches(tr, settle.BoundPayment{
+	return settle.AssertTransactionPays(dec, sixs, settle.BoundPayment{
 		PayTo:  [32]byte(destATA),
 		Asset:  [32]byte(mint),
 		Payer:  [32]byte(payer),
 		Amount: new(big.Int).SetUint64(amount),
 	})
+}
+
+func toSettleIxs(ixs []solana.Instruction) ([]settle.Instruction, error) {
+	out := make([]settle.Instruction, len(ixs))
+	for i, ix := range ixs {
+		data, err := ix.Data()
+		if err != nil {
+			return nil, err
+		}
+		accs := ix.Accounts()
+		a := make([][32]byte, len(accs))
+		for j, m := range accs {
+			a[j] = [32]byte(m.PublicKey)
+		}
+		out[i] = settle.Instruction{ProgramID: [32]byte(ix.ProgramID()), Data: data, Accounts: a}
+	}
+	return out, nil
+}
+
+// ── Associated Token Account (idempotent create) ────────────────────────────
+
+var (
+	ataProgramID   = solana.MustPublicKeyFromBase58("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
+	sysProgramID   = solana.MustPublicKeyFromBase58("11111111111111111111111111111111")
+	tokenProgramID = solana.MustPublicKeyFromBase58("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
+)
+
+// rawInstruction is a minimal solana.Instruction for the ATA CreateIdempotent
+// call — avoids depending on a helper whose API name varies across SDK versions.
+type rawInstruction struct {
+	prog  solana.PublicKey
+	metas []*solana.AccountMeta
+	data  []byte
+}
+
+func (r rawInstruction) ProgramID() solana.PublicKey     { return r.prog }
+func (r rawInstruction) Accounts() []*solana.AccountMeta { return r.metas }
+func (r rawInstruction) Data() ([]byte, error)           { return r.data, nil }
+
+// createATAIdempotent builds the Associated-Token-Account program's
+// CreateIdempotent instruction (discriminator 0x01): create `ata` (the wallet's
+// USDC account) funded by payer, or no-op if it already exists.
+func createATAIdempotent(payer, ata, wallet, mint solana.PublicKey) solana.Instruction {
+	return rawInstruction{
+		prog: ataProgramID,
+		metas: []*solana.AccountMeta{
+			{PublicKey: payer, IsSigner: true, IsWritable: true},
+			{PublicKey: ata, IsSigner: false, IsWritable: true},
+			{PublicKey: wallet, IsSigner: false, IsWritable: false},
+			{PublicKey: mint, IsSigner: false, IsWritable: false},
+			{PublicKey: sysProgramID, IsSigner: false, IsWritable: false},
+			{PublicKey: tokenProgramID, IsSigner: false, IsWritable: false},
+		},
+		data: []byte{1}, // CreateIdempotent
+	}
 }

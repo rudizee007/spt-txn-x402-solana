@@ -48,14 +48,17 @@ func main() {
 
 	// 3. Over-scope payment → denied before signing.
 	pricey := demo.NewResourceServer(acc, 10_000_000, "https://api.example.com/premium")
-	c2 := demo.NewClient(acc, scope)
 	t2 := gate.Token{Nonce: seed(0x6B), Expiry: now.Add(time.Minute)}
-	o = c2.Pay(pricey, t2, now, false)
+	o = c.Pay(pricey, t2, now, false)
 	fmt.Printf("[3] over-scope 10.00 USDC   -> %-15s %s\n", o.Decision, o.Reason)
 
 	// 4. Tampered destination → settle guard aborts before signing.
-	c3 := demo.NewClient(acc, scope)
 	t3 := gate.Token{Nonce: seed(0x7C), Expiry: now.Add(time.Minute)}
-	o = c3.Pay(server, t3, now, true)
+	o = c.Pay(server, t3, now, true)
 	fmt.Printf("[4] tampered recipient      -> %-15s aborted-before-sign=%-5v %s\n", o.Decision, o.AbortedBeforeSign, o.Reason)
+
+	// Evidence: every decision above emitted a signed, chained receipt.
+	root := c.ReceiptRoot()
+	fmt.Printf("\nevidence: %d signed receipts, merkle root %x\n", c.ReceiptCount(), root)
+	fmt.Println("          anchor it on devnet with:  go run -tags devnet ./cmd/anchordevnet")
 }
