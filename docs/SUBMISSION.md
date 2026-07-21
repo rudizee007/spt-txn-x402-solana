@@ -5,18 +5,19 @@ Copy-paste reference for the Eternal portal. Two things are yours to supply
 
 ## One-liner
 
-> x402 moves the money. SPT-Txn proves the agent was *allowed* to — per
-> transaction, verified offline, with a tamper-evident receipt.
+> x402 moves the money. SPT-Txn proves the agent was allowed to — per transaction, with a  tamper-evident receipt, verifiable offline at the edge or online for instant revocation.
+
 
 ## Short description
 
-SPT-Txn is a per-transaction authorization layer for x402 agent payments. Authority
-exists only inside a short-lived token bound to one exact payment — one asset, one
-amount, one recipient — verified offline with no call home, so a hijacked agent
-holds a token that is cryptographically useless for any other payment. A pre-sign
-guard refuses to sign a transaction that doesn't match, real USDC settles on
-Solana devnet, and every decision emits a signed receipt whose Merkle root is
-anchored on-chain. Drop-in middleware adds this to any x402 server in one line.
+SPT-Txn is the per-transaction authorization layer x402 is missing. x402 moves the
+money; it never checks whether the agent was *allowed* to. SPT-Txn puts authority
+inside a short-lived token bound to one exact payment — one asset, one amount, one
+recipient — verified offline with no call home, so a hijacked or prompt-injected
+agent holds a token that's useless for any other payment. A pre-sign guard refuses
+any transaction that doesn't match; a real USDC transfer settles on Solana devnet;
+and every decision emits a signed receipt whose log's Merkle root is anchored
+on-chain. Drop-in middleware adds it to any x402 server in one line.
 
 ## Links
 
@@ -24,9 +25,10 @@ anchored on-chain. Drop-in middleware adds this to any x402 server in one line.
 - **On-chain escrow:** https://github.com/rudizee007/spt-txn-x402-escrow  *(TODO: publish + confirm public)*
 - **Reference engine:** https://github.com/rudizee007/spt-txn-poc
 - **Demo video:** *(TODO: upload + paste URL)*
-- **Devnet settlement tx (payer → merchant USDC):** https://explorer.solana.com/tx/3H4MfiYrsZ66pK23VkCFeKPpN18u2YiJQvWDnqTBNp4Hy541kMKtDWuVV9xnBN9Kp9R8WBiRN6m4uaBrCm76rNkX?cluster=devnet
-- **Devnet evidence anchor tx (receipt root via Memo):** https://explorer.solana.com/tx/2CQpKfHvfMTd2bDp5mYAFB5giaiqLKWdAHroE74CRVf271n9VEmdbrRne6m5M4DyeKNjw9TEwxoqVBuH7YVAU1m9?cluster=devnet
-- **Escrow program (devnet):** `JUYFyssaZLPb1fwTgNJG6MwmfQKnUvCvSmhjWA5sgdk`
+- **Devnet settlement tx (authorization-gated USDC, shown in the demo):** https://explorer.solana.com/tx/376oVo5dNc8tVgJiXB6eVpckNhTNchxbrgs19ShZmcmNx1ZxkN6v8Hvw6TjFVRxo2Xzs1w1RDPFT6BdxbsPDU1u2?cluster=devnet
+- **Devnet settlement tx (payer → merchant, earlier run):** https://explorer.solana.com/tx/3H4MfiYrsZ66pK23VkCFeKPpN18u2YiJQvWDnqTBNp4Hy541kMKtDWuVV9xnBN9Kp9R8WBiRN6m4uaBrCm76rNkX?cluster=devnet
+- **Devnet evidence anchor tx (receipt root via Memo):** https://explorer.solana.com/tx/iFwwZkv134qXcMX3D17JtbtiVQHJcA3RYfVBaM7QgWchGUjqVtaPukLuhQepXJ2ou6QuL3AN8n7EzyjjJAwKuCi?cluster=devnet
+- **Escrow program (deployed, devnet):** https://explorer.solana.com/address/C9kTmtYm5V8cFfNvgzJAcVfM2zYN1Pqv245Xe27h4NwZ?cluster=devnet
 - **IETF Internet-Draft:** https://datatracker.ietf.org/doc/draft-coetzee-oauth-spt-txn-tokens/
 - **Zenodo DOI:** `10.5281/zenodo.19299787`
 - **ORCID:** `0009-0009-6557-8843`
