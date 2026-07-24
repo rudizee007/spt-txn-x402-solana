@@ -11,10 +11,13 @@ Copy-paste reference for the Eternal portal. Two things are yours to supply
 ## Short description
 
 SPT-Txn is the per-transaction authorization layer x402 is missing. x402 moves the
-money; it never checks whether the agent was *allowed* to. SPT-Txn puts authority
-inside a short-lived token bound to one exact payment — one asset, one amount, one
-recipient — verified offline with no call home, so a hijacked or prompt-injected
-agent holds a token that's useless for any other payment. A pre-sign guard refuses
+money; it never checks whether the *actor* was allowed to. It authorizes any actor
+initiating a payment — a person acting through an interface, a non-human workload,
+or an AI agent (including agents acting over MCP), with the autonomous-agent case
+the most urgent. SPT-Txn puts authority inside a short-lived token bound to one
+exact payment — one asset, one amount, one recipient — verified offline with no
+call home, so a hijacked or prompt-injected agent holds a token that's useless for
+any other payment. A pre-sign guard refuses
 any transaction that doesn't match; a real USDC transfer settles on Solana devnet;
 and every decision emits a signed receipt whose log's Merkle root is anchored
 on-chain. Drop-in middleware adds it to any x402 server in one line.
