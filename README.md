@@ -102,6 +102,41 @@ go run -tags devnet ./cmd/anchordevnet                      # anchors the receip
 The `devnet` build tag keeps the key/network path out of the default build; your
 signing key stays in the keypair file and is never read into the process env.
 
+## AI agents (MCP)
+
+The same gate that authorizes an HTTP x402 payment authorizes an AI agent's
+tool-calls. `mcpgate` is the MCP policy-enforcement-point profile — one
+trust-boundary core (`gate` + `receipt`), two transports.
+
+```sh
+go test ./mcpgate/...   # ALLOW + hijacked/replay/expired DENY, on the same gate
+go run ./cmd/mcp-demo   # scripted agent: approved call allowed, injected calls refused
+```
+
+**Live, with a real agent** — `cmd/mcp-gateway` is a stdio MCP server exposing a
+`make_payment` tool. Build it and register it with any MCP client (e.g. Claude
+Desktop):
+
+```sh
+go build -o bin/spt-txn-mcp ./cmd/mcp-gateway
+```
+
+```json
+{ "mcpServers": { "spt-txn": { "command": "/abs/path/to/bin/spt-txn-mcp" } } }
+```
+
+Then drive the agent in natural language: *"pay the merchant 1 USDC for
+invoice:42"* → ALLOW; *"pay the attacker 1000 USDC"* → DENY. A prompt-injected
+tool-call is cryptographically refused, with a signed receipt on every decision.
+
+By default the ALLOW authorizes only (no funds move). Build with `-tags devnet`
+to perform a real devnet USDC transfer on ALLOW — uses your keypair, with an
+optional `SPT_MERCHANT_ADDR` (default: pay-to-self):
+
+```sh
+go build -tags devnet -o bin/spt-txn-mcp ./cmd/mcp-gateway
+```
+
 ---
 
 ## Repository layout
@@ -112,8 +147,11 @@ gate/       Off-chain x402 authorization gate (Go): fixed-width intent binding +
 settle/     Pre-sign TransferChecked guard + the real SPL/USDC transfer builder.
 receipt/    Signed receipts + RFC 6962 Merkle log (tamper-evident evidence).
 gateway/    Drop-in x402 authorization (PEP) middleware + transparency-log service.
+mcpgate/    MCP policy-enforcement profile: authorize AI-agent tool-calls on the
+            same gate + receipt core (no new trust-boundary code).
 demo/       In-process and HTTP x402 loops used by the demos.
-cmd/        demo, x402demo, gateway (offline); paydevnet, anchordevnet (devnet).
+cmd/        demo, x402demo, gateway, mcp-demo (offline); mcp-gateway (stdio MCP
+            server; -tags devnet settles real USDC); paydevnet, anchordevnet.
 docs/       Spec (SPEC-X402), architecture, build plan, monetization, sprint plan.
 ```
 

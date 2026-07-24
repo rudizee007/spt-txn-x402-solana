@@ -30,9 +30,8 @@ import (
 	"github.com/rudizee007/spt-txn-x402-solana/gate"
 	"github.com/rudizee007/spt-txn-x402-solana/mcpgate"
 	"github.com/rudizee007/spt-txn-x402-solana/receipt"
+	"github.com/rudizee007/spt-txn-x402-solana/settle"
 )
-
-const usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
 func b32(x byte) [32]byte {
 	var a [32]byte
@@ -90,19 +89,22 @@ func replyErr(id json.RawMessage, code int, msg string) {
 type server struct {
 	enf      *mcpgate.Enforcer
 	merchant string
+	asset    string
 }
 
 func main() {
 	_, rk, _ := ed25519.GenerateKey(nil)
-	merchant := addr(0x11)
+	merchant := demoMerchant()
+	asset := gate.EncodeBase58(settle.USDCDevnetMint[:]) // devnet USDC mint
 
 	s := &server{
 		merchant: merchant,
+		asset:    asset,
 		enf: &mcpgate.Enforcer{
 			Scheme:    "exact",
 			Network:   "solana:devnet",
 			Allowlist: gate.Allowlist{Schemes: map[string]byte{"exact": 1}, Networks: map[string]byte{"solana:devnet": 2}},
-			Policy:    mcpgate.ExactPayment{Asset: usdc, PayTo: merchant, Resource: "invoice:42", MaxAmount: 1_000_000},
+			Policy:    mcpgate.ExactPayment{Asset: asset, PayTo: merchant, Resource: "invoice:42", MaxAmount: 1_000_000},
 			Spend:     gate.NewMemSpendLog(),
 			Log:       receipt.NewLog(rk.Public().(ed25519.PublicKey)),
 			RKey:      rk,
@@ -207,23 +209,35 @@ func (s *server) toolsCall(params json.RawMessage) interface{} {
 		return toolText("DENY: negative amount", true)
 	}
 
-	atomic := strconv.FormatUint(uint64(math.Round(p.Arguments.AmountUSDC*1_000_000)), 10)
+	micro := uint64(math.Round(p.Arguments.AmountUSDC * 1_000_000))
+	atomic := strconv.FormatUint(micro, 10)
 	var nonce [32]byte
 	rand.Read(nonce[:])
 
+	to := s.resolveTo(p.Arguments.To)
 	r := s.enf.Authorize(mcpgate.ToolCall{
-		To:       s.resolveTo(p.Arguments.To),
-		Asset:    usdc,
+		To:       to,
+		Asset:    s.asset,
 		Amount:   atomic,
 		Resource: p.Arguments.Resource,
 		Nonce:    nonce,
 		Expiry:   time.Now().Add(time.Minute),
 	})
-
-	if r.Allowed() {
-		return toolText(fmt.Sprintf("ALLOW — authorized by the SPT-Txn enforcement point (no funds moved in this demo). Receipt %s.", r.Receipt), false)
+	if !r.Allowed() {
+		return toolText(fmt.Sprintf("DENY — refused by the SPT-Txn enforcement point: %s. No payment was made.", r.Reason), true)
 	}
-	return toolText(fmt.Sprintf("DENY — refused by the SPT-Txn enforcement point: %s. No payment was made.", r.Reason), true)
+
+	// Authorized. settlePayment is a no-op in the default build; with -tags
+	// devnet it performs a real USDC transfer and returns the tx signature.
+	sig, err := settlePayment(to, micro)
+	switch {
+	case err != nil:
+		return toolText(fmt.Sprintf("AUTHORIZED (receipt %s) but settlement failed: %v", r.Receipt, err), true)
+	case sig != "":
+		return toolText(fmt.Sprintf("ALLOW — authorized and SETTLED on devnet. Receipt %s.\n  tx: https://explorer.solana.com/tx/%s?cluster=devnet", r.Receipt, sig), false)
+	default:
+		return toolText(fmt.Sprintf("ALLOW — authorized by the SPT-Txn enforcement point (no funds moved in this build). Receipt %s.", r.Receipt), false)
+	}
 }
 
 // resolveTo maps the demo labels "merchant"/"attacker" to concrete addresses so
