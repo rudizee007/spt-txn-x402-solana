@@ -177,7 +177,7 @@ func (s *server) toolsList() interface{} {
 				"inputSchema": map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
-						"to":         map[string]interface{}{"type": "string", "description": "recipient: a base58 address, or the demo label \"merchant\" or \"attacker\""},
+						"to":          map[string]interface{}{"type": "string", "description": "recipient: a base58 address, or the demo label \"merchant\" or \"attacker\""},
 						"amount_usdc": map[string]interface{}{"type": "number", "description": "amount in USDC"},
 						"resource":    map[string]interface{}{"type": "string", "description": "what is being paid for, e.g. invoice:42"},
 					},
@@ -221,7 +221,7 @@ func (s *server) toolsCall(params json.RawMessage) interface{} {
 	})
 
 	if r.Allowed() {
-		return toolText(fmt.Sprintf("ALLOW — payment authorized and settled. Receipt %s.", r.Receipt), false)
+		return toolText(fmt.Sprintf("ALLOW — authorized by the SPT-Txn enforcement point (no funds moved in this demo). Receipt %s.", r.Receipt), false)
 	}
 	return toolText(fmt.Sprintf("DENY — refused by the SPT-Txn enforcement point: %s. No payment was made.", r.Reason), true)
 }
