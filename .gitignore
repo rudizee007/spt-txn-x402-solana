@@ -24,3 +24,10 @@ dist/
 *.swp
 .idea/
 .vscode/
+
+# ── Runtime evidence ───────────────────────────────────────────────────────
+# Written by cmd/x402demo, read by cmd/anchordevnet. Holds no key material —
+# the receipt-signing private key is never serialized — but it is per-run
+# output, not source, and committing it invites anchoring a stale root.
+receipts.json
+receipts-*.json

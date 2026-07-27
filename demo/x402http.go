@@ -216,6 +216,12 @@ func (c *HTTPClient) ReceiptRoot() [32]byte { return c.receipts.Root() }
 // ReceiptCount is the number of decisions recorded.
 func (c *HTTPClient) ReceiptCount() int { return c.receipts.Len() }
 
+// SaveReceipts writes the signed receipt log to path so a later process can
+// anchor exactly this log's root on-chain (see cmd/anchordevnet). The log is
+// written, not handed out: nothing outside this package can append to a client's
+// evidence.
+func (c *HTTPClient) SaveReceipts(path string) error { return c.receipts.Save(path) }
+
 // Pay performs GET → 402 → gate → settle → X-PAYMENT retry → 200 against url.
 // tamper redirects the built transfer to the attacker, demonstrating the settle
 // guard aborting before signing (no X-PAYMENT is ever sent in that case).

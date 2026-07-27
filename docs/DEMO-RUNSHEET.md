@@ -15,6 +15,10 @@ reproducible.
 - Pre-build so there's no compile lag: `go build ./... >/dev/null 2>&1`.
 - A browser tab open on Solana Explorer (devnet).
 - Silence notifications.
+- **Order matters now.** Step [2] writes `receipts.json`; step [5] anchors that
+  file's root. Run both from the repo root in the same take, and don't re-run
+  `x402demo` between them — a re-run rewrites the log. Delete any stale
+  `receipts.json` before recording so the anchor can't pick up an old one.
 
 ---
 
@@ -48,7 +52,8 @@ go test ./...
 go run ./cmd/x402demo
 ```
 
-*(four decision lines print, then the evidence Merkle root)*
+*(four decision lines print, then the evidence Merkle root, then
+`receipt log: receipts.json`)*
 
 > "Here's the whole flow over real HTTP. A resource returns a 402 — payment
 > required — and the gate decides before anything is signed. In-scope: authorized,
@@ -56,7 +61,11 @@ go run ./cmd/x402demo
 > Over-budget: denied. And a tampered payment, where the money's been redirected —
 > the gate approved the legitimate request, but the pre-sign guard catches the swap
 > and refuses to sign. Every one of those decisions dropped a signed receipt, and
-> here's the Merkle root over all of them."
+> here's the Merkle root over all of them — written to disk, so we can anchor
+> exactly this batch in a moment."
+
+**Hold this root on screen long enough to read it.** Step [5] prints the same
+value, and the whole point of the sequence is that the viewer can match them.
 
 ## [3] Real USDC on Solana devnet (~30s) — cut to the browser when the link prints
 
@@ -69,7 +78,8 @@ go run -tags devnet ./cmd/paydevnet -amount 100000
 > "Now the same thing on Solana devnet, with real USDC. The guard decodes the
 > actual transaction, confirms it pays exactly the bound recipient and amount under
 > my authority, and only then signs and settles. There it is on-chain — a real,
-> authorization-gated USDC transfer to a fresh merchant."
+> authorization-gated USDC transfer to the bound merchant — the exact recipient the
+> token authorized, and no other."
 
 ## [4] The adversarial case — refused before signing (~20s)
 
@@ -91,12 +101,18 @@ go run -tags devnet ./cmd/paydevnet -amount 100000 -tamper
 go run -tags devnet ./cmd/anchordevnet
 ```
 
-*(prints the Merkle root and a memo tx link)*
+*(prints `4 receipts, verified`, the same Merkle root as step [2], a memo tx link,
+and an inclusion proof)*
 
-> "The compliance evidence is a byproduct. The receipt log's Merkle root is
-> anchored on-chain through the SPL Memo program. Any single decision can be proven
-> to belong to that batch — tamper-evident, and no personal data ever touches the
-> ledger."
+> "The compliance evidence is a byproduct. This reads the log those four decisions
+> just wrote — re-checking every signature, re-walking the hash chain, and
+> recomputing the root rather than trusting the file — and anchors that root
+> on-chain through the SPL Memo program. Same root you saw a minute ago. Any single
+> decision can be proven to belong to that batch — tamper-evident, and no personal
+> data ever touches the ledger."
+
+If the log is missing, edited, reordered or truncated, this command exits instead
+of anchoring. That's the intended behaviour, not a failed take.
 
 ## [6] Drop-in for any x402 server (~20s)
 
@@ -123,12 +139,13 @@ go run ./cmd/gateway
 ## All commands, in order (for a dry run)
 
 ```sh
+rm -f receipts.json                                         # off-camera, before the take
 clear
 go test ./...
-go run ./cmd/x402demo
+go run ./cmd/x402demo                                       # writes receipts.json
 go run -tags devnet ./cmd/paydevnet -amount 100000          # settle -> browser cut
 go run -tags devnet ./cmd/paydevnet -amount 100000 -tamper  # REFUSING TO SIGN
-go run -tags devnet ./cmd/anchordevnet                      # anchor the root
+go run -tags devnet ./cmd/anchordevnet                      # anchors receipts.json's root
 go run ./cmd/gateway                                        # PEP + transparency
 ```
 

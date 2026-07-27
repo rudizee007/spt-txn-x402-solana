@@ -3,11 +3,22 @@
 // should see: in-scope release, replay refused, over-scope denied, and a
 // tampered payment aborted before signing.
 //
+// Every decision emits a signed receipt. The run writes that log to disk so the
+// anchoring step commits the root of *these* decisions, not a synthetic stand-in:
+//
 //	go run ./cmd/x402demo
+//	go run -tags devnet ./cmd/anchordevnet
+//
+// The Merkle root printed here and the root anchored on devnet are the same
+// value. The receipt-signing key is fresh on every run and is never written to
+// the log file, so a re-run reproduces the same root under a different key — the
+// root commits to the decisions, not to who signed them.
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"net/http/httptest"
 	"time"
 
@@ -24,6 +35,9 @@ func seed(b byte) [32]byte {
 }
 
 func main() {
+	out := flag.String("receipts", "receipts.json", "path to write the signed receipt log (read by cmd/anchordevnet); empty to skip")
+	flag.Parse()
+
 	acc := demo.NewAccounts()
 	now := time.Unix(1_700_000_000, 0)
 	scope := demo.Scope{
@@ -63,5 +77,14 @@ func main() {
 	// Evidence: every decision above emitted a signed, chained receipt.
 	root := c.ReceiptRoot()
 	fmt.Printf("\nevidence: %d signed receipts, merkle root %x\n", c.ReceiptCount(), root)
-	fmt.Println("          anchor it on devnet with:  go run -tags devnet ./cmd/anchordevnet")
+
+	if *out == "" {
+		fmt.Println("          receipt log not written (-receipts was empty)")
+		return
+	}
+	if err := c.SaveReceipts(*out); err != nil {
+		log.Fatalf("write receipt log: %v", err)
+	}
+	fmt.Printf("          receipt log: %s\n", *out)
+	fmt.Println("          anchor this exact root with:  go run -tags devnet ./cmd/anchordevnet")
 }

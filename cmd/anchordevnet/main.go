@@ -1,23 +1,33 @@
 //go:build devnet
 
-// Command anchordevnet builds a small SPT-Txn receipt log, takes its RFC 6962
-// Merkle root, and anchors that root on Solana devnet via the SPL Memo program —
-// a periodic write, never in the decision hot path. It then shows that a specific
-// decision can be proven to belong to the anchored batch via an inclusion proof.
+// Command anchordevnet loads the signed receipt log produced by the enforcement
+// path, takes its RFC 6962 Merkle root, and anchors that root on Solana devnet
+// via the SPL Memo program — a periodic write, never in the decision hot path.
+// It then shows that a specific decision can be proven to belong to the anchored
+// batch via an inclusion proof.
+//
+// The log is not synthesized here. It is read from disk, and it is verified
+// before anything is signed: every receipt's signature is re-checked, the hash
+// chain is re-walked, and the Merkle root is recomputed from the receipts rather
+// than trusted from the file. A log that has been edited, reordered or truncated
+// does not get anchored — the command exits instead.
+//
+//	go run ./cmd/x402demo                        # writes receipts.json
+//	go run -tags devnet ./cmd/anchordevnet       # anchors that file's root
+//
+// The root printed by the demo and the root anchored here are the same value.
 //
 // Same key/network discipline as paydevnet: the signing key stays in your keypair
 // file, and this path is behind the `devnet` build tag (excluded from the default
 // `go test ./...`).
-//
-//	go run -tags devnet ./cmd/anchordevnet
 //
 // Requires a little devnet SOL for the fee (no USDC needed).
 package main
 
 import (
 	"context"
-	"crypto/ed25519"
 	"encoding/hex"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -52,47 +62,42 @@ func defaultKeypair() string {
 	return filepath.Join(h, ".config", "solana", "id.json")
 }
 
-func fill(b byte) [32]byte {
-	var a [32]byte
-	for i := range a {
-		a[i] = b
-	}
-	return a
-}
-
 func main() {
 	keypairPath := flag.String("keypair", defaultKeypair(), "path to a Solana CLI keypair json (devnet)")
+	logPath := flag.String("receipts", "receipts.json", "signed receipt log to anchor (written by cmd/x402demo)")
+	proofSeq := flag.Int("proof", 1, "receipt index to demonstrate an inclusion proof for")
 	flag.Parse()
 	ctx := context.Background()
 
+	// 1. Load the evidence and verify it before anything else happens. LoadLog
+	//    re-checks every signature, re-walks the hash chain, and recomputes the
+	//    root from the receipts themselves. Anything short of sound fails closed.
+	rlog, err := receipt.LoadLog(*logPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			log.Fatalf("no receipt log at %s — run `go run ./cmd/x402demo` first, it writes one", *logPath)
+		}
+		log.Fatalf("load receipt log %s: %v", *logPath, err)
+	}
+	if rlog.Len() == 0 {
+		log.Fatalf("receipt log %s is empty — nothing to anchor", *logPath)
+	}
+	if *proofSeq < 0 || *proofSeq >= rlog.Len() {
+		log.Fatalf("-proof %d out of range: the log holds %d receipts (0..%d)", *proofSeq, rlog.Len(), rlog.Len()-1)
+	}
+
+	root := rlog.Root()
+	rootHex := hex.EncodeToString(root[:])
+	fmt.Printf("receipt log:  %s\n", *logPath)
+	fmt.Printf("  %d receipts, verified (signatures, hash chain, merkle root)\n", rlog.Len())
+	fmt.Printf("  merkle root: %s\n\n", rootHex)
+
+	// 2. Anchor the root.
 	payer, err := solana.PrivateKeyFromSolanaKeygenFile(*keypairPath)
 	if err != nil {
 		log.Fatalf("load keypair: %v", err)
 	}
 	payerPub := payer.PublicKey()
-
-	// Build a small receipt log. The receipt-signing key is generated here and is
-	// distinct from the payer/issuer key (separate blast radius). The Merkle root
-	// depends only on the receipt contents, so it is reproducible: with these
-	// fixed decisions it equals the unit-test KAT root.
-	rpub, rpriv, err := ed25519.GenerateKey(nil)
-	if err != nil {
-		log.Fatalf("receipt keygen: %v", err)
-	}
-	rlog := receipt.NewLog(rpub)
-	appendOrDie := func(_ receipt.Entry, e error) {
-		if e != nil {
-			log.Fatalf("append receipt: %v", e)
-		}
-	}
-	appendOrDie(rlog.Append(rpriv, receipt.Allow, fill(0x11), 1_700_000_000))
-	appendOrDie(rlog.Append(rpriv, receipt.DenyViolation, fill(0x22), 1_700_000_060))
-	appendOrDie(rlog.Append(rpriv, receipt.DenyUnavailable, fill(0x33), 1_700_000_120))
-	if err := rlog.Verify(); err != nil {
-		log.Fatalf("receipt log failed self-verify: %v", err)
-	}
-	root := rlog.Root()
-	rootHex := hex.EncodeToString(root[:])
 
 	memoIx := rawInstruction{
 		prog:  memoProgramID,
@@ -129,25 +134,19 @@ func main() {
 		log.Fatalf("send: %v", err)
 	}
 
-	// Demonstrate that a specific decision is provably in the anchored batch.
-	proof, err := rlog.Proof(1)
+	// 3. Demonstrate that a specific decision is provably in the anchored batch.
+	proof, err := rlog.Proof(*proofSeq)
 	if err != nil {
 		log.Fatalf("proof: %v", err)
 	}
-	ok := receipt.VerifyInclusion(root, mustCanonical(rlog, 1), 1, rlog.Len(), proof)
+	leaf, ok := rlog.At(*proofSeq)
+	if !ok {
+		log.Fatalf("receipt %d not found", *proofSeq)
+	}
+	verified := receipt.VerifyInclusion(root, leaf.CanonicalBytes(), *proofSeq, rlog.Len(), proof)
 
 	fmt.Printf("anchored %d receipts on devnet\n", rlog.Len())
 	fmt.Printf("  merkle root: %s\n", rootHex)
 	fmt.Printf("  memo tx:     https://explorer.solana.com/tx/%s?cluster=devnet\n", sig)
-	fmt.Printf("  receipt #1 inclusion proof: %d hashes, verifies=%v\n", len(proof), ok)
-}
-
-// mustCanonical returns the canonical bytes of receipt seq for the inclusion
-// check (kept tiny to avoid exporting log internals).
-func mustCanonical(l *receipt.Log, seq int) []byte {
-	r, ok := l.At(seq)
-	if !ok {
-		log.Fatalf("receipt %d not found", seq)
-	}
-	return r.CanonicalBytes()
+	fmt.Printf("  receipt #%d inclusion proof: %d hashes, verifies=%v\n", *proofSeq, len(proof), verified)
 }

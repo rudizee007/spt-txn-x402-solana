@@ -172,10 +172,13 @@ func (s *server) toolsList() interface{} {
 	return map[string]interface{}{
 		"tools": []interface{}{
 			map[string]interface{}{
-				"name": "make_payment",
-				"description": "Pay a recipient in USDC. Every call is authorized by an SPT-Txn " +
-					"policy-enforcement point: only the exact payment the human approved is allowed; " +
-					"any other recipient, amount, or resource is cryptographically refused.",
+				"name": "authorize_payment",
+				"description": "Ask the SPT-Txn authorization enforcement point whether a proposed " +
+					"payment is permitted by the policy a human pre-approved. Returns ALLOW or DENY. " +
+					"This is a security demonstration on Solana devnet using valueless test tokens: the " +
+					"agent holds no keys and moves no real funds — it only requests the authorization " +
+					"decision. On ALLOW, the enforcement point (not the agent) records a devnet test " +
+					"settlement and returns the transaction link.",
 				"inputSchema": map[string]interface{}{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -202,7 +205,7 @@ func (s *server) toolsCall(params json.RawMessage) interface{} {
 	if err := json.Unmarshal(params, &p); err != nil {
 		return toolText("invalid tool arguments", true)
 	}
-	if p.Name != "make_payment" {
+	if p.Name != "authorize_payment" {
 		return toolText("unknown tool: "+p.Name, true)
 	}
 	if p.Arguments.AmountUSDC < 0 {
@@ -224,7 +227,7 @@ func (s *server) toolsCall(params json.RawMessage) interface{} {
 		Expiry:   time.Now().Add(time.Minute),
 	})
 	if !r.Allowed() {
-		return toolText(fmt.Sprintf("DENY — refused by the SPT-Txn enforcement point: %s. No payment was made.", r.Reason), true)
+		return toolText(fmt.Sprintf("REFUSED by the SPT-Txn enforcement point: %s. The proposed payment is not authorized.", r.Reason), true)
 	}
 
 	// Authorized. settlePayment is a no-op in the default build; with -tags
@@ -232,11 +235,11 @@ func (s *server) toolsCall(params json.RawMessage) interface{} {
 	sig, err := settlePayment(to, micro)
 	switch {
 	case err != nil:
-		return toolText(fmt.Sprintf("AUTHORIZED (receipt %s) but settlement failed: %v", r.Receipt, err), true)
+		return toolText(fmt.Sprintf("AUTHORIZED (receipt %s) — but the devnet test settlement failed: %v", r.Receipt, err), true)
 	case sig != "":
-		return toolText(fmt.Sprintf("ALLOW — authorized and SETTLED on devnet. Receipt %s.\n  tx: https://explorer.solana.com/tx/%s?cluster=devnet", r.Receipt, sig), false)
+		return toolText(fmt.Sprintf("AUTHORIZED by the SPT-Txn enforcement point. The enforcement point settled the payment on Solana devnet (test tokens, no real value). Receipt %s.\n  tx: https://explorer.solana.com/tx/%s?cluster=devnet", r.Receipt, sig), false)
 	default:
-		return toolText(fmt.Sprintf("ALLOW — authorized by the SPT-Txn enforcement point (no funds moved in this build). Receipt %s.", r.Receipt), false)
+		return toolText(fmt.Sprintf("AUTHORIZED by the SPT-Txn enforcement point (test mode; no settlement performed). Receipt %s.", r.Receipt), false)
 	}
 }
 

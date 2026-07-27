@@ -208,6 +208,11 @@ func (c *Client) ReceiptRoot() [32]byte { return c.receipts.Root() }
 // ReceiptCount is the number of decisions recorded.
 func (c *Client) ReceiptCount() int { return c.receipts.Len() }
 
+// SaveReceipts writes the signed receipt log to path so a later process can
+// anchor exactly this log's root on-chain. The log is passed by value, not by
+// pointer: nothing outside this package can append to a client's evidence.
+func (c *Client) SaveReceipts(path string) error { return c.receipts.Save(path) }
+
 // Pay runs one full loop against server with the given token. If tamper is true
 // the built transfer is redirected to the attacker, to demonstrate the §6.4
 // settle-guard catching it before any signature.
