@@ -64,7 +64,11 @@ MiCA), and the x402 gateway — the shortest paths to recurring revenue.
 
 ## Pre-submission checklist
 
-- [ ] `go test ./...` green; `govulncheck ./...` clean
+- [x] `go test ./...` green; `govulncheck ./...` **and** `govulncheck -tags devnet ./...`
+      both clean (2026-08-03). One module-level, unreachable finding
+      (`GO-2026-5932`, unimported `x/crypto/openpgp`) documented in
+      [`SECURITY.md`](../SECURITY.md); Rust `cargo audit` findings are dev-dependency
+      only and documented in the escrow repo's `SECURITY.md`.
 - [ ] Main repo public + §0-clean (final grep: no hook / private / disclosure refs)
 - [x] Escrow repo published public (2026-07-19)
 - [x] Release-on-proof escrow proven on devnet: deny 6105, deny 6102, release
