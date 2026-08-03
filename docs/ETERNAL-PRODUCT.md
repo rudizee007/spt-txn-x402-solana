@@ -34,9 +34,11 @@ Reproducible from the repo in ~5 minutes (`go test ./...`, `go run ./cmd/x402dem
   an independent Python implementation.
 - A **pre-sign guard** that refuses to sign unless the on-chain transaction pays
   exactly the bound recipient/asset/amount under the payer's authority.
-- A **real USDC payment settled on devnet** — payer → a brand-new merchant, whose
-  token account is created in the same transaction — and, from the same wallet, a
-  *tampered* payment **refused before signing**, so nothing touches the chain.
+- A **real USDC payment settled on devnet** — payer → merchant, with the
+  merchant's USDC token account created *idempotently* in the same transaction
+  when it does not already exist, so a brand-new recipient just works — and, from
+  the same wallet, a *tampered* payment **refused before signing**, so nothing
+  touches the chain.
   [Settlement tx](https://explorer.solana.com/tx/3H4MfiYrsZ66pK23VkCFeKPpN18u2YiJQvWDnqTBNp4Hy541kMKtDWuVV9xnBN9Kp9R8WBiRN6m4uaBrCm76rNkX?cluster=devnet)
   (the refusal never becomes a transaction).
 - **Signed, hash-chained receipts** with an RFC 6962 Merkle root **anchored

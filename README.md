@@ -65,6 +65,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and the diagram
 | Gateway / PEP middleware (drop-in x402 authorization) | **Built & tested** |
 | Transparency-log service (receipts as an HTTP API) | **Built & tested** |
 | Option 2: on-chain enforcement (Anchor program) | **Published separately** — `spt-txn-x402-escrow`, devnet-deployed |
+| Release-on-proof settlement path (`escrow/` + `cmd/escrowdevnet`) | **Built & tested** — differential tests against the program's own fixtures |
 | Mainnet | Gated; devnet-first by default |
 
 Nothing here is overstated: what's marked *Built* runs today (`go test ./...`),
@@ -101,6 +102,22 @@ go run -tags devnet ./cmd/anchordevnet                      # anchors the receip
 
 The `devnet` build tag keeps the key/network path out of the default build; your
 signing key stays in the keypair file and is never read into the process env.
+
+**Release-on-proof settlement (the trustless path):** the two commands above are
+still the payer's own code refusing to sign. To take the payer's cooperation out
+of the trust model entirely, put the funds in the escrow and make the *program*
+the enforcement point:
+
+```sh
+go run -tags devnet ./cmd/escrowdevnet -gen-issuer  # once: issuer key, 0600, outside the repo
+go run -tags devnet ./cmd/escrowdevnet -mode setup  # once per deployment: config + allowlist
+go run -tags devnet ./cmd/escrowdevnet -mode all    # deposit, two on-chain denials, release
+```
+
+`-mode all` lands the deposit, a *validly signed* attestation over the wrong
+binding (reverts `6105 BindingMismatch`), a *validly signed* attestation from a
+non-allowlisted issuer (reverts `6102 IssuerNotAuthorized`), and the real release.
+See [`onchain/README.md`](onchain/README.md) for why both denials sign for real.
 
 ## AI agents (MCP)
 

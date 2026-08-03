@@ -30,7 +30,7 @@ on-chain. Drop-in middleware adds it to any x402 server in one line.
 - **Demo video:** *(TODO: upload + paste URL)*
 - **Devnet settlement tx (authorization-gated USDC, shown in the demo):** https://explorer.solana.com/tx/376oVo5dNc8tVgJiXB6eVpckNhTNchxbrgs19ShZmcmNx1ZxkN6v8Hvw6TjFVRxo2Xzs1w1RDPFT6BdxbsPDU1u2?cluster=devnet
 - **Devnet settlement tx (payer → merchant, earlier run):** https://explorer.solana.com/tx/3H4MfiYrsZ66pK23VkCFeKPpN18u2YiJQvWDnqTBNp4Hy541kMKtDWuVV9xnBN9Kp9R8WBiRN6m4uaBrCm76rNkX?cluster=devnet
-- **Devnet evidence anchor tx (receipt root via Memo):** https://explorer.solana.com/tx/iFwwZkv134qXcMX3D17JtbtiVQHJcA3RYfVBaM7QgWchGUjqVtaPukLuhQepXJ2ou6QuL3AN8n7EzyjjJAwKuCi?cluster=devnet
+- **Devnet evidence anchor tx (receipt root via Memo):** https://explorer.solana.com/tx/2CQpKfHvfMTd2bDp5mYAFB5giaiqLKWdAHroE74CRVf271n9VEmdbrRne6m5M4DyeKNjw9TEwxoqVBuH7YVAU1m9?cluster=devnet
 - **Escrow program (deployed, devnet):** https://explorer.solana.com/address/C9kTmtYm5V8cFfNvgzJAcVfM2zYN1Pqv245Xe27h4NwZ?cluster=devnet
 - **IETF Internet-Draft:** https://datatracker.ietf.org/doc/draft-coetzee-oauth-spt-txn-tokens/
 - **Zenodo DOI:** `10.5281/zenodo.19299787`

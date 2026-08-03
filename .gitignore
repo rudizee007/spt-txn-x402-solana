@@ -10,6 +10,9 @@ id.json
 .env.*
 
 # ── Build artifacts ────────────────────────────────────────────────────────
+# /bin/ holds locally compiled binaries (e.g. spt-txn-mcp). A committed binary is
+# unreviewable, unreproducible, and goes stale silently — build it, don't ship it.
+/bin/
 /gate/gate
 /settle/settle
 /settle/sol-pay
@@ -31,3 +34,8 @@ dist/
 # output, not source, and committing it invites anchoring a stale root.
 receipts.json
 receipts-*.json
+
+# Written by `cmd/escrowdevnet -mode deposit`, read by `-mode release`. Holds the
+# escrow's PUBLIC parameters only — no key material — but it is per-run output.
+escrow-ticket.json
+escrow-ticket-*.json
