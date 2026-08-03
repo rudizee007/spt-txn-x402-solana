@@ -1,6 +1,6 @@
 # `onchain/` — on-chain enforcement (release-on-proof escrow)
 
-**Built and deployed to devnet.** The Anchor program lives in its own repository,
+**Built and proven on devnet.** The Anchor program lives in its own repository,
 [`spt-txn-x402-escrow`](https://github.com/rudizee007/spt-txn-x402-escrow), and is
 deployed at
 [`C9kTmtYm5V8cFfNvgzJAcVfM2zYN1Pqv245Xe27h4NwZ`](https://explorer.solana.com/address/C9kTmtYm5V8cFfNvgzJAcVfM2zYN1Pqv245Xe27h4NwZ?cluster=devnet).
@@ -10,6 +10,23 @@ beyond the standard library) and `cmd/escrowdevnet`, which drives the whole path
 end to end on devnet.
 
 This directory is the map between the two.
+
+## Proven on devnet
+
+Every claim below is a confirmed transaction, not a test fixture.
+
+| Step | What it establishes | Transaction |
+|---|---|---|
+| `init_config` | Config created with an **empty** allowlist — deny-by-default, on chain | [tx](https://explorer.solana.com/tx/2hKJngUeAdg3CGJ6p1RzCzc7T5cyaQBuk82X1oocBtxUXY9T9DbJsiKEBqAH2jc8pHbaWrrGSH6XGgP9Ph7qTaCQ?cluster=devnet) |
+| `add_issuer` | The issuer is authorized in a *separate* transaction, so the deny-by-default state existed on its own | [tx](https://explorer.solana.com/tx/3TpeXa9N6oeQoimyfxWC7BEBFDpFLy2VAqKEKvZukhCfNnePqiBp19KqXtYB5sS2AgdpdrxVUTBeQkyUopfo3gpz?cluster=devnet) |
+| `init_escrow` | Funds move into the vault PDA; the config account is not even touched, so custody setup asserts no authorization | [tx](https://explorer.solana.com/tx/23uwVCXj7ZWgXzdYHQRn9YrUmPeMVXBTJ4847ZxsZdrUkwaFen5NgqYXUsvuExTwJ9MiJpwZBMaqyKnAYPSXg3AW?cluster=devnet) |
+| `release_with_proof` | **DENIED `6105 BindingMismatch`** — genuine signature, authorized issuer, but the attestation is bound to a different payment | [tx](https://explorer.solana.com/tx/62NBEFfhkuXacPuUWZaFUBmpiPR6NivnDKkwTEQQDiPL5RDD3uq74G1gMSoJrtHb8QcesGyhyeh4GZpv1ChsZQz4?cluster=devnet) |
+| `release_with_proof` | **DENIED `6102 IssuerNotAuthorized`** — genuine signature, correct binding, issuer not on the allowlist | [tx](https://explorer.solana.com/tx/67VjPLQprswyR2wS6RaS4k6xFbkNxddrz4sUVu11b2c96A1kPg8i58vPW9ag3YMEB872EkC6eh6rTZA28LDmuuqy?cluster=devnet) |
+| `release_with_proof` | **RELEASED** — funds to the recipient, escrow and vault closed, spent marker created | [tx](https://explorer.solana.com/tx/2zeKqbfirZ9U7VwbL2ngdRm9phRDLobAq1oUtvSz9Jk2A6HUhKviNL2Q8YvAjHLbUjCoWrMWKN6ykEaYTFshe43f?cluster=devnet) |
+
+Reproduce with `go run -tags devnet ./cmd/escrowdevnet -mode all`. The tool fails
+loudly in both directions: if a transaction expected to revert instead succeeds,
+it stops and reports that the enforcement property does not hold.
 
 ## What changes when enforcement moves on-chain
 

@@ -33,6 +33,12 @@ on-chain. Drop-in middleware adds it to any x402 server in one line.
 - **Devnet settlement tx (payer → merchant, earlier run):** https://explorer.solana.com/tx/3H4MfiYrsZ66pK23VkCFeKPpN18u2YiJQvWDnqTBNp4Hy541kMKtDWuVV9xnBN9Kp9R8WBiRN6m4uaBrCm76rNkX?cluster=devnet
 - **Devnet evidence anchor tx (receipt root via Memo):** https://explorer.solana.com/tx/2CQpKfHvfMTd2bDp5mYAFB5giaiqLKWdAHroE74CRVf271n9VEmdbrRne6m5M4DyeKNjw9TEwxoqVBuH7YVAU1m9?cluster=devnet
 - **Escrow program (deployed, devnet):** https://explorer.solana.com/address/C9kTmtYm5V8cFfNvgzJAcVfM2zYN1Pqv245Xe27h4NwZ?cluster=devnet
+- **Escrow — deny-by-default config created (empty allowlist):** https://explorer.solana.com/tx/2hKJngUeAdg3CGJ6p1RzCzc7T5cyaQBuk82X1oocBtxUXY9T9DbJsiKEBqAH2jc8pHbaWrrGSH6XGgP9Ph7qTaCQ?cluster=devnet
+- **Escrow — issuer authorized (`add_issuer`):** https://explorer.solana.com/tx/3TpeXa9N6oeQoimyfxWC7BEBFDpFLy2VAqKEKvZukhCfNnePqiBp19KqXtYB5sS2AgdpdrxVUTBeQkyUopfo3gpz?cluster=devnet
+- **Escrow — deposit into the vault PDA:** https://explorer.solana.com/tx/23uwVCXj7ZWgXzdYHQRn9YrUmPeMVXBTJ4847ZxsZdrUkwaFen5NgqYXUsvuExTwJ9MiJpwZBMaqyKnAYPSXg3AW?cluster=devnet
+- **Escrow — on-chain DENY `6105 BindingMismatch`** (validly signed, wrong escrow): https://explorer.solana.com/tx/62NBEFfhkuXacPuUWZaFUBmpiPR6NivnDKkwTEQQDiPL5RDD3uq74G1gMSoJrtHb8QcesGyhyeh4GZpv1ChsZQz4?cluster=devnet
+- **Escrow — on-chain DENY `6102 IssuerNotAuthorized`** (validly signed, rogue issuer): https://explorer.solana.com/tx/67VjPLQprswyR2wS6RaS4k6xFbkNxddrz4sUVu11b2c96A1kPg8i58vPW9ag3YMEB872EkC6eh6rTZA28LDmuuqy?cluster=devnet
+- **Escrow — RELEASE against a valid proof** (funds move, escrow closes): https://explorer.solana.com/tx/2zeKqbfirZ9U7VwbL2ngdRm9phRDLobAq1oUtvSz9Jk2A6HUhKviNL2Q8YvAjHLbUjCoWrMWKN6ykEaYTFshe43f?cluster=devnet
 - **IETF Internet-Draft:** https://datatracker.ietf.org/doc/draft-coetzee-oauth-spt-txn-tokens/
 - **Zenodo DOI:** `10.5281/zenodo.19299787`
 - **ORCID:** `0009-0009-6557-8843`
@@ -61,6 +67,7 @@ MiCA), and the x402 gateway — the shortest paths to recurring revenue.
 - [ ] `go test ./...` green; `govulncheck ./...` clean
 - [ ] Main repo public + §0-clean (final grep: no hook / private / disclosure refs)
 - [x] Escrow repo published public (2026-07-19)
+- [x] Release-on-proof escrow proven on devnet: deny 6105, deny 6102, release
 - [ ] Demo video recorded, uploaded, and linked here
 - [ ] Product page filled (from `ETERNAL-PRODUCT.md`); all links above resolve
 - [x] Week 1 update video posted (https://youtu.be/R_f7R0nkM1M)

@@ -45,6 +45,27 @@ Reproducible from the repo in ~5 minutes (`go test ./...`, `go run ./cmd/x402dem
   on-chain via SPL Memo** — any single decision is provably in the batch,
   tamper-evident, no PII on the ledger.
   [Anchor tx](https://explorer.solana.com/tx/2CQpKfHvfMTd2bDp5mYAFB5giaiqLKWdAHroE74CRVf271n9VEmdbrRne6m5M4DyeKNjw9TEwxoqVBuH7YVAU1m9?cluster=devnet)
+- **Trustless release-on-proof escrow — the program itself is the enforcement
+  point.** Funds sit in a vault PDA and move only against an Ed25519 attestation
+  from an allow-listed issuer, bound to *that exact escrow*. The config is
+  created with an **empty** allowlist — deny-by-default, on chain, in its own
+  transaction — and the issuer is authorized separately. Two **validly signed**
+  proofs are then refused *inside the program*: one bound to a different payment
+  (`6105 BindingMismatch`), one from a non-allowlisted issuer
+  (`6102 IssuerNotAuthorized`). Only the real proof releases, after which a
+  spent-marker PDA makes that binding unreleasable forever.
+  [Config, empty allowlist](https://explorer.solana.com/tx/2hKJngUeAdg3CGJ6p1RzCzc7T5cyaQBuk82X1oocBtxUXY9T9DbJsiKEBqAH2jc8pHbaWrrGSH6XGgP9Ph7qTaCQ?cluster=devnet) ·
+  [Issuer authorized](https://explorer.solana.com/tx/3TpeXa9N6oeQoimyfxWC7BEBFDpFLy2VAqKEKvZukhCfNnePqiBp19KqXtYB5sS2AgdpdrxVUTBeQkyUopfo3gpz?cluster=devnet) ·
+  [Deposit](https://explorer.solana.com/tx/23uwVCXj7ZWgXzdYHQRn9YrUmPeMVXBTJ4847ZxsZdrUkwaFen5NgqYXUsvuExTwJ9MiJpwZBMaqyKnAYPSXg3AW?cluster=devnet) ·
+  [DENY 6105](https://explorer.solana.com/tx/62NBEFfhkuXacPuUWZaFUBmpiPR6NivnDKkwTEQQDiPL5RDD3uq74G1gMSoJrtHb8QcesGyhyeh4GZpv1ChsZQz4?cluster=devnet) ·
+  [DENY 6102](https://explorer.solana.com/tx/67VjPLQprswyR2wS6RaS4k6xFbkNxddrz4sUVu11b2c96A1kPg8i58vPW9ag3YMEB872EkC6eh6rTZA28LDmuuqy?cluster=devnet) ·
+  [RELEASE](https://explorer.solana.com/tx/2zeKqbfirZ9U7VwbL2ngdRm9phRDLobAq1oUtvSz9Jk2A6HUhKviNL2Q8YvAjHLbUjCoWrMWKN6ykEaYTFshe43f?cluster=devnet)
+
+  Both denials are genuinely signed. Tampering with the *signature* instead
+  would fail the Ed25519 precompile at transaction verification, the validator
+  would drop the transaction, and nothing would land — a dropped transaction
+  proves nothing. An on-chain DENY requires a real signature failing a real
+  policy check.
 
 No custom cryptography; `go test ./...` green; `govulncheck` clean.
 
@@ -60,7 +81,7 @@ No custom cryptography; `go test ./...` green; `govulncheck` clean.
 4. **USDC settlement on devnet** — including merchant-pay and the tamper refusal.
 5. **Signed receipts + RFC 6962 Merkle log + on-chain anchor.**
 6. **On-chain trustless escrow** — release-on-proof enforcement (Anchor program,
-   devnet-deployed).
+   devnet-*proven*: two validly-signed proofs refused on chain, then a release).
 7. **Gateway / PEP middleware** — drop-in x402 authorization *(built this sprint)*.
 8. **Transparency-log / receipts service** — receipts productized *(built this
    sprint)*.

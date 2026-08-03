@@ -64,8 +64,8 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and the diagram
 | On-chain evidence anchor (Merkle root via SPL Memo) | **Built & proven on devnet** |
 | Gateway / PEP middleware (drop-in x402 authorization) | **Built & tested** |
 | Transparency-log service (receipts as an HTTP API) | **Built & tested** |
-| Option 2: on-chain enforcement (Anchor program) | **Published separately** — `spt-txn-x402-escrow`, devnet-deployed |
-| Release-on-proof settlement path (`escrow/` + `cmd/escrowdevnet`) | **Built & tested** — differential tests against the program's own fixtures |
+| Option 2: on-chain enforcement (Anchor program) | **Published separately** — `spt-txn-x402-escrow`, **proven on devnet** |
+| Release-on-proof settlement path (`escrow/` + `cmd/escrowdevnet`) | **Built & proven on devnet** — two on-chain denials (`6105`, `6102`) then a release |
 | Mainnet | Gated; devnet-first by default |
 
 Nothing here is overstated: what's marked *Built* runs today (`go test ./...`),
