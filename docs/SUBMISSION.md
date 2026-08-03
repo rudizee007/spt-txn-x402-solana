@@ -27,6 +27,7 @@ on-chain. Drop-in middleware adds it to any x402 server in one line.
 - **Main repo:** https://github.com/rudizee007/spt-txn-x402-solana  *(TODO: confirm public)*
 - **On-chain escrow:** https://github.com/rudizee007/spt-txn-x402-escrow  *(TODO: publish + confirm public)*
 - **Reference engine:** https://github.com/rudizee007/spt-txn-poc
+- **Week 1 update video:** https://youtu.be/R_f7R0nkM1M
 - **Demo video:** *(TODO: upload + paste URL)*
 - **Devnet settlement tx (authorization-gated USDC, shown in the demo):** https://explorer.solana.com/tx/376oVo5dNc8tVgJiXB6eVpckNhTNchxbrgs19ShZmcmNx1ZxkN6v8Hvw6TjFVRxo2Xzs1w1RDPFT6BdxbsPDU1u2?cluster=devnet
 - **Devnet settlement tx (payer → merchant, earlier run):** https://explorer.solana.com/tx/3H4MfiYrsZ66pK23VkCFeKPpN18u2YiJQvWDnqTBNp4Hy541kMKtDWuVV9xnBN9Kp9R8WBiRN6m4uaBrCm76rNkX?cluster=devnet
@@ -59,8 +60,9 @@ MiCA), and the x402 gateway — the shortest paths to recurring revenue.
 
 - [ ] `go test ./...` green; `govulncheck ./...` clean
 - [ ] Main repo public + §0-clean (final grep: no hook / private / disclosure refs)
-- [ ] Escrow repo: `anchor build` + `cargo test` green; novelty re-scan + line-by-line review done; published public
+- [x] Escrow repo published public (2026-07-19)
 - [ ] Demo video recorded, uploaded, and linked here
 - [ ] Product page filled (from `ETERNAL-PRODUCT.md`); all links above resolve
-- [ ] Weekly update videos 1–4 posted
+- [x] Week 1 update video posted (https://youtu.be/R_f7R0nkM1M)
+- [ ] Weekly update videos 2–4 posted
 - [ ] Devnet tx links open on the explorer

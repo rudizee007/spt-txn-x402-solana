@@ -79,7 +79,7 @@ Claude Desktop window). Pause ~2 seconds after each result so captions have room
 ## 3. Publish
 
 ```sh
-scp SPT-TXN-MCP-live-demo.mp4 <user>@<server>:/var/www/htdocs/foss.violetskysecurity.com/
+scp SPT-TXN-MCP-live-demo.mp4 <user>@<server>:<webroot>/<host>/
 ```
 Then add a video card to `demo.html` and re-scp the page.
 
