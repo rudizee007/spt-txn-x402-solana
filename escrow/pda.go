@@ -10,7 +10,7 @@ import (
 // addresses themselves — changing one does not "rename" anything, it points the
 // program at a different account that does not exist.
 const (
-	SeedConfig = "config"
+	SeedConfig = "config-v2"
 	SeedEscrow = "escrow"
 	SeedVault  = "vault"
 

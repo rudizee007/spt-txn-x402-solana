@@ -11,7 +11,7 @@ The on-chain component lives in a separate repository and has its own policy:
 ## What this code is trusted to do
 
 This repository is the off-chain half of the system: the SPT-Txn gate, the
-settler, the receipt log, and the gateway and MCP front ends. Four properties
+settler, the receipt log, and the gateway and MCP front ends. Five properties
 carry the weight.
 
 **Authorization is decided before anything is signed.** The gate computes a
@@ -26,10 +26,20 @@ settler refuses to sign unless the constructed transaction pays exactly the
 amount, asset and recipient that were bound. A gate that was wrong, bypassed, or
 compromised still does not produce a signature for an unbound transfer.
 
+**The escrow client names its own releasing issuer.** `init_escrow` carries the
+issuer public key as its fourth argument, and the on-chain program stores it
+immutably: the payer, not the operator, decides which key can ever release that
+deposit. The encoding of those three consecutive 32-byte arguments is pinned by
+a known-answer test (`escrow/anchor_test.go`) because Borsh carries no field
+names — a transposition would pass a length check and silently pin a key the
+payer never chose.
+
 **Key material never enters the repository.** Solana keypairs are read from a
-path supplied at runtime (`SPT_KEYPAIR`, or the `-gen-issuer` key file written
-at mode 0600 under `~/.config/spt-txn/`), never from source and never from
-committed configuration. `.gitignore` refuses `*keypair*.json`, `*-devnet.json`,
+path supplied at runtime (`SPT_KEYPAIR`, or the `-gen-issuer` / `-gen-admin` key
+files written at mode 0600 under `~/.config/spt-txn/`), never from source and
+never from committed configuration. The devnet driver keeps the payer, issuer
+and issuer-admin keys in three separate files precisely because the on-chain
+program refuses to let one key hold two of those roles. `.gitignore` refuses `*keypair*.json`, `*-devnet.json`,
 `*-mainnet.json`, `id.json`, `*.pem`, `*.key` and `.env*`. `git ls-files`
 returns no JSON file and no key file in this repository. Devnet keys are treated
 as secrets on the same terms as mainnet keys, because the habit is what fails,

@@ -9,10 +9,12 @@ import (
 // from the instruction's snake_case name, and every account with one derived
 // from its type name. Getting a discriminator wrong is not a security failure —
 // the program simply does not recognise the instruction — but it is a cheap way
-// to waste a devnet round trip, so the six the escrow program exposes are pinned
-// by known-answer test in anchor_test.go.
+// to waste a devnet round trip, so the eight the escrow program exposes are
+// pinned by known-answer test in anchor_test.go.
 const (
 	IxInitConfig       = "init_config"
+	IxProposeAdmin     = "propose_admin"
+	IxAcceptAdmin      = "accept_admin"
 	IxAddIssuer        = "add_issuer"
 	IxRemoveIssuer     = "remove_issuer"
 	IxInitEscrow       = "init_escrow"
@@ -47,15 +49,23 @@ func AccountDiscriminator(typeName string) [8]byte {
 // off-chain ComputeBinding in this package is for deriving the PDA address and
 // for building the matching attestation — never for telling the program what to
 // believe.
-func InitEscrowData(amount uint64, resourceID, nonce [32]byte) []byte {
+//
+// `issuer` IS sent, and it is the point of this instruction: it pins the one
+// issuer whose attestation can ever release this escrow. The program stores it
+// immutably and ANDs it with the allowlist at release, so an issuer added after
+// this deposit — including one added by a compromised admin — cannot touch it.
+// Pass the issuer the payer actually trusts, not whatever the allowlist happens
+// to contain at deposit time.
+func InitEscrowData(amount uint64, resourceID, nonce, issuer [32]byte) []byte {
 	d := Discriminator(IxInitEscrow)
-	out := make([]byte, 0, 8+8+32+32)
+	out := make([]byte, 0, 8+8+32+32+32)
 	out = append(out, d[:]...)
 	var amt [8]byte
 	binary.LittleEndian.PutUint64(amt[:], amount)
 	out = append(out, amt[:]...)
 	out = append(out, resourceID[:]...)
 	out = append(out, nonce[:]...)
+	out = append(out, issuer[:]...)
 	return out
 }
 
@@ -94,8 +104,27 @@ func RemoveIssuerData(issuer [32]byte) []byte {
 	return append(out, issuer[:]...)
 }
 
-// InitConfigData encodes init_config(), which takes no arguments.
+// InitConfigData encodes init_config(), which takes no arguments. The admin is
+// named by ACCOUNT, not by argument, and must be a different key from the signing
+// upgrade authority — the program rejects the transaction if they match.
 func InitConfigData() []byte {
 	d := Discriminator(IxInitConfig)
+	return d[:]
+}
+
+// ProposeAdminData encodes propose_admin(new_admin: Pubkey), step 1 of the
+// two-step admin handover. Nothing changes until the nominee calls accept_admin.
+func ProposeAdminData(newAdmin [32]byte) []byte {
+	d := Discriminator(IxProposeAdmin)
+	out := make([]byte, 0, 8+32)
+	out = append(out, d[:]...)
+	return append(out, newAdmin[:]...)
+}
+
+// AcceptAdminData encodes accept_admin(), step 2. It takes no arguments: the
+// nominee is identified by the signing account, which is what makes the handover
+// proof-of-possession rather than an assertion by the outgoing admin.
+func AcceptAdminData() []byte {
+	d := Discriminator(IxAcceptAdmin)
 	return d[:]
 }
