@@ -29,7 +29,7 @@ root **anchored on devnet**. `go test ./...` green, govulncheck clean.
 | **1** | Merchant-pay (`CreateAssociatedTokenAccountIdempotent`, pay a real second wallet); flip the repo **public** after a novelty scan of the new Option-1 content; polish the quickstart. | The working loop end-to-end on devnet: 402 → gate → guard → USDC settle → on-chain evidence root. |
 | **2** | Public **Option 2 on-chain escrow enforcement** (already novelty-cleared and devnet-deployed) wired in as the "trustless" settlement path: funds released only on a valid on-chain proof, fails closed. | On-chain enforcement — the stronger trustless story; escrow release gated by the SPT-Txn proof. |
 | **3** | **Gateway / PEP form factor**: a drop-in x402 middleware a resource server puts in front of its endpoint, plus a compliance-receipt/transparency-log service (the receipts productized). | Adoption — how any x402 server adds authorization with one middleware and gets audit evidence for free. |
-| **4** | Polish, docs, the 3-minute demo video (script ready in `DEMO-SCRIPT.md`), pitch, and submission. | The full product + the ask: standards position (IETF draft, NIST/NCCoE), what the accelerator funds. |
+| **4** | Polish, docs, the 3-minute demo video (script ready in `DEMO-SCRIPT.md`), pitch, and submission. | The full product + the ask: standards engagement (an individual IETF draft; comments filed with NIST/NCCoE — submitted, not endorsed), what the accelerator funds. |
 
 ## Submission checklist
 

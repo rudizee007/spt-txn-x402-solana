@@ -32,11 +32,21 @@ competitor.
 - **x402 deliberately leaves authorization, delegation, policy, and revocation out
   of scope** — a gap the whole ecosystem is now hitting. The Solana Foundation,
   Visa, Coinbase, and Phantom are all pushing agentic payments in 2025–26.
-- **NIST/CAISI and NCCoE are standardizing AI-agent authorization right now**, and
-  the construct they are converging toward is transaction-scoped authorization —
-  ours. Standards position is the moat.
-- Regulated money movement (FATF **Travel Rule**, EU **DORA/MiCA**) needs
-  per-transaction, provable, PII-free authorization. That is exactly what we emit.
+- **The standards bodies have opened the question and not answered it.** In
+  February 2026 NIST's CAISI launched an AI Agent Standards Initiative, and the
+  NCCoE published a concept paper on software and AI-agent identity and
+  authorization naming authorization, auditing and non-repudiation of agents as
+  unsolved — without naming a mechanism. Both are at concept and
+  request-for-input stage; no standard exists and nothing has been endorsed. The
+  moat is being early and implemented while the construct is still undecided, not
+  a claim that anyone has picked us.
+- Regulated money movement pushes from the demand side. FATF's **Travel Rule**,
+  **MiCA** and **DORA** oblige operators to attribute and retain records for
+  individual transfers. None of them mandates this construct, and the Travel Rule
+  specifically requires originator and beneficiary data to pass *between*
+  institutions — so "PII-free" is a property of the ledger, not of the compliance
+  flow. What we emit is per-transaction authorization evidence as a byproduct of
+  enforcement, with no PII on a public chain.
 
 ## How we make money
 
@@ -70,8 +80,9 @@ never touching PII or holding funds.
 
 ## Traction / assets (real, all citable)
 
-- IETF Internet-Draft `draft-coetzee-oauth-spt-txn-tokens`; formal game-based
-  security proofs; Zenodo DOI `10.5281/zenodo.19299787`.
+- IETF Internet-Draft `draft-coetzee-oauth-spt-txn-tokens` — an individual
+  submission, not working-group adopted; formal game-based security proofs;
+  Zenodo DOI `10.5281/zenodo.19299787`.
 - Working reference implementation (Apache-2.0): offline 8-step verifier,
   attenuating delegation, format-agnostic policy engine.
 - **Proven on Solana devnet today**: an agent's over-scope payment is refused
@@ -79,7 +90,11 @@ never touching PII or holding funds.
   human anchor written on-chain via SPL Memo — no PII on the ledger.
 - Live integration demonstrated against enterprise identity (PingOne AI Agent,
   Auth0, Keycloak) over RFC 8693.
-- NIST SP 800-133r3 public comments acknowledged; NCCoE Letter of Interest.
+- Public comments submitted on the NIST SP 800-133r3 initial public draft
+  (released for comment April 2026), and on the NCCoE concept paper on software
+  and AI-agent identity and authorization (comments closed 2 April 2026). Both
+  are submissions on the record; neither is an endorsement, and NIST has
+  published no response.
 
 ## The Solana / x402 wedge (this hackathon)
 

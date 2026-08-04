@@ -1,7 +1,8 @@
 # Colosseum Eternal — submission packet
 
-Copy-paste reference for the Eternal portal. Two things are yours to supply
-(marked **TODO**): the demo-video URL, and confirming the repos are public.
+Copy-paste reference for the Eternal portal. One thing is still yours to supply
+(marked **TODO**): the demo-video URL. All three repos below were confirmed
+publicly reachable, signed out, on 2026-08-04.
 
 ## One-liner
 
@@ -24,8 +25,8 @@ on-chain. Drop-in middleware adds it to any x402 server in one line.
 
 ## Links
 
-- **Main repo:** https://github.com/rudizee007/spt-txn-x402-solana  *(TODO: confirm public)*
-- **On-chain escrow:** https://github.com/rudizee007/spt-txn-x402-escrow  *(TODO: publish + confirm public)*
+- **Main repo:** https://github.com/rudizee007/spt-txn-x402-solana
+- **On-chain escrow:** https://github.com/rudizee007/spt-txn-x402-escrow
 - **Reference engine:** https://github.com/rudizee007/spt-txn-poc
 - **Week 1 update video:** https://youtu.be/R_f7R0nkM1M
 - **Demo video:** *(TODO: upload + paste URL)*

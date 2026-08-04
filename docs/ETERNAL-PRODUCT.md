@@ -116,11 +116,22 @@ sprint's net-new build.
 ## Why now
 
 x402 deliberately leaves authorization, delegation, and revocation out of scope —
-a gap the whole ecosystem is now hitting. NIST/CAISI and NCCoE are standardizing
-AI-agent authorization, and the construct they are converging toward is
-transaction-scoped authorization — this one. Regulated money movement (FATF
-Travel Rule, EU MiCA/DORA) needs per-transaction, provable, PII-free
-authorization. Standards position is the moat.
+a gap the whole ecosystem is now hitting. The same gap is open one level up: in
+February 2026 NIST's CAISI opened an AI Agent Standards Initiative, and the NCCoE
+published a concept paper on software and AI-agent identity and authorization
+that names authorization, auditing and non-repudiation of agents as unsolved
+without settling on a mechanism. Both are at concept and request-for-input stage.
+No standard has been written, nothing has been endorsed, and that is precisely
+the opening: the construct is still undecided, and what gets read at this stage
+is a working implementation with a published security argument behind it.
+
+Regulated money movement pushes from the demand side. The FATF Travel Rule, MiCA
+and DORA oblige operators to attribute and retain records for individual
+transfers. None of them mandates this construct — and the Travel Rule in fact
+requires originator and beneficiary data to move *between* institutions, so
+"PII-free" describes the ledger, not the compliance flow. What an operator gets
+here is per-transaction authorization evidence as a byproduct of enforcement,
+with no PII written on a public chain.
 
 ## Business model
 
@@ -134,13 +145,17 @@ tool that runs in their infra and never touches PII or holds funds.
 
 ## Traction & assets (all citable)
 
-- IETF Internet-Draft `draft-coetzee-oauth-spt-txn-tokens`; formal game-based
-  security proofs; Zenodo DOI `10.5281/zenodo.19299787`; ORCID
-  `0009-0009-6557-8843`.
+- IETF Internet-Draft `draft-coetzee-oauth-spt-txn-tokens` — an individual
+  submission, not working-group adopted; formal game-based security proofs;
+  Zenodo DOI `10.5281/zenodo.19299787`; ORCID `0009-0009-6557-8843`.
 - Working open-source reference implementation: offline verifier, attenuating
   delegation, format-agnostic policy engine.
 - This Solana x402 integration, proven on devnet (above).
-- NIST SP 800-133r3 public comments; NCCoE engagement.
+- Public comments submitted on the NIST SP 800-133r3 initial public draft
+  (released for comment April 2026), and on the NCCoE concept paper *Accelerating
+  the Adoption of Software and AI Agent Identity and Authorization* (comments
+  closed 2 April 2026). Submitted and on the record — not endorsed; NIST has
+  published no response to either.
 
 ## The ask
 
