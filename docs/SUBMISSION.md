@@ -33,12 +33,16 @@ on-chain. Drop-in middleware adds it to any x402 server in one line.
 - **Devnet settlement tx (payer → merchant, earlier run):** https://explorer.solana.com/tx/3H4MfiYrsZ66pK23VkCFeKPpN18u2YiJQvWDnqTBNp4Hy541kMKtDWuVV9xnBN9Kp9R8WBiRN6m4uaBrCm76rNkX?cluster=devnet
 - **Devnet evidence anchor tx (receipt root via Memo):** https://explorer.solana.com/tx/2CQpKfHvfMTd2bDp5mYAFB5giaiqLKWdAHroE74CRVf271n9VEmdbrRne6m5M4DyeKNjw9TEwxoqVBuH7YVAU1m9?cluster=devnet
 - **Escrow program (deployed, devnet):** https://explorer.solana.com/address/C9kTmtYm5V8cFfNvgzJAcVfM2zYN1Pqv245Xe27h4NwZ?cluster=devnet
-- **Escrow — deny-by-default config created (empty allowlist):** https://explorer.solana.com/tx/2hKJngUeAdg3CGJ6p1RzCzc7T5cyaQBuk82X1oocBtxUXY9T9DbJsiKEBqAH2jc8pHbaWrrGSH6XGgP9Ph7qTaCQ?cluster=devnet
-- **Escrow — issuer authorized (`add_issuer`):** https://explorer.solana.com/tx/3TpeXa9N6oeQoimyfxWC7BEBFDpFLy2VAqKEKvZukhCfNnePqiBp19KqXtYB5sS2AgdpdrxVUTBeQkyUopfo3gpz?cluster=devnet
-- **Escrow — deposit into the vault PDA:** https://explorer.solana.com/tx/23uwVCXj7ZWgXzdYHQRn9YrUmPeMVXBTJ4847ZxsZdrUkwaFen5NgqYXUsvuExTwJ9MiJpwZBMaqyKnAYPSXg3AW?cluster=devnet
-- **Escrow — on-chain DENY `6105 BindingMismatch`** (validly signed, wrong escrow): https://explorer.solana.com/tx/62NBEFfhkuXacPuUWZaFUBmpiPR6NivnDKkwTEQQDiPL5RDD3uq74G1gMSoJrtHb8QcesGyhyeh4GZpv1ChsZQz4?cluster=devnet
-- **Escrow — on-chain DENY `6102 IssuerNotAuthorized`** (validly signed, rogue issuer): https://explorer.solana.com/tx/67VjPLQprswyR2wS6RaS4k6xFbkNxddrz4sUVu11b2c96A1kPg8i58vPW9ag3YMEB872EkC6eh6rTZA28LDmuuqy?cluster=devnet
-- **Escrow — RELEASE against a valid proof** (funds move, escrow closes): https://explorer.solana.com/tx/2zeKqbfirZ9U7VwbL2ngdRm9phRDLobAq1oUtvSz9Jk2A6HUhKviNL2Q8YvAjHLbUjCoWrMWKN6ykEaYTFshe43f?cluster=devnet
+- **Escrow — program upgraded to the hardened build** (issuer pinning + role separation): https://explorer.solana.com/tx/53G8LuvdfBucEKEkqSEVvxAvYwbzBCogQsFaAf2BiZvCt5ma7bnUfMX8tsaGLnwwdawyRUEK6s5aPRw4pcFqY7QZ?cluster=devnet
+- **Escrow — deny-by-default config created** (empty allowlist; the upgrade authority signs but names a *different* key as admin — the program rejects the transaction if one key would hold both): https://explorer.solana.com/tx/3Xx65mAHMC3Cu7YrPbvmUrCxHzSXpCQYbNqJ693t33XUWM78GKLkXyPuFynijapKoovpNsJgeuijsck655U9Y4Fv?cluster=devnet
+- **Escrow — issuer authorized (`add_issuer`):** https://explorer.solana.com/tx/5zY1CUym2A9eYnaGuz7f43SEJY6FQZ15cj9iuk23MGfTSvf1eXzjvSSLzNNAF1UUriAVwxygaPfk3ksNyT7vcBxZ?cluster=devnet
+- **Escrow — deposit into the vault PDA** (the payer pins the one issuer permitted to release *this* escrow): https://explorer.solana.com/tx/2L4HCrVkh1yRrKtASvXntzWhWFX8Q4Bqy6JSzaRwXPCgkHTHhgVdBykFgtbkfLrQ34Uw1d1Y7ZC58NEAT4BhRJLU?cluster=devnet
+- **Escrow — on-chain DENY `6105 BindingMismatch`** (validly signed, wrong escrow): https://explorer.solana.com/tx/2LhQ55BWtLTF4LrBF7Qm9vsCPReXr8Bk6RUqWHM7SJ6iwJhCF2xWM2cxJ4u99XUrdbBiT26ssVFDBNo9otTzJLmm?cluster=devnet
+- **Escrow — on-chain DENY `6102 IssuerNotAuthorized`** (validly signed, issuer not allow-listed): https://explorer.solana.com/tx/2PdFXekEZHf6SD3NLzEY7FGcBZB8484yF2FA9u9A1qBNBuRzfYKz68tAPxvwfKYrKSxegvZ9RNqVLf7ia8LstBZc?cluster=devnet
+- **Escrow — a compromised admin allow-lists a rogue issuer, and it SUCCEEDS** (the admin genuinely has this power; the run does not simulate it): https://explorer.solana.com/tx/576zuHiQqgc8jNTGpgpAKzfLV5Ry7ZihJF9g9Ffj3CVYKXVzNc2F8zFrvBvcB5FFhH56PtUGswBKT5WuboLXYgBs?cluster=devnet
+- **Escrow — on-chain DENY `6108 IssuerNotPinned`** — *the custody claim.* The rogue issuer is now on the allowlist and signs a valid, correctly bound, fresh attestation. The release still fails, because it is not the issuer this payer pinned at deposit: https://explorer.solana.com/tx/5tVnrNwESCNawdLEB7Q6r2wVys2rEvpRMZrTQUaWEwz5roE2W6fypJ2V8yx1WtJTKFMr3UzVcJqsAEKpy6jGsC6Y?cluster=devnet
+- **Escrow — rogue issuer revoked (`remove_issuer`):** https://explorer.solana.com/tx/5q9joyuykk3xTBzqj3EPhHyJthDmjL4d98eCRzEPTCEpXYRmvU8YQLqtdgwXJfSfW9E7uXfrcxjdGcXLUCtkH3ib?cluster=devnet
+- **Escrow — RELEASE against a valid proof** (funds move, escrow closes, spent marker created): https://explorer.solana.com/tx/3wAaBFu2mRJtGq2MZJ5RQFf9iwaKyTyVrETpLySYrMb9uxbQ74bt6bdhSNS7uuMakuY1eddx5Tu5EC4kheWugiVw?cluster=devnet
 - **IETF Internet-Draft:** https://datatracker.ietf.org/doc/draft-coetzee-oauth-spt-txn-tokens/
 - **Zenodo DOI:** `10.5281/zenodo.19299787`
 - **ORCID:** `0009-0009-6557-8843`

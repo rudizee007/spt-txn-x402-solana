@@ -49,19 +49,35 @@ Reproducible from the repo in ~5 minutes (`go test ./...`, `go run ./cmd/x402dem
   point.** Funds sit in a vault PDA and move only against an Ed25519 attestation
   from an allow-listed issuer, bound to *that exact escrow*. The config is
   created with an **empty** allowlist — deny-by-default, on chain, in its own
-  transaction — and the issuer is authorized separately. Two **validly signed**
-  proofs are then refused *inside the program*: one bound to a different payment
-  (`6105 BindingMismatch`), one from a non-allowlisted issuer
-  (`6102 IssuerNotAuthorized`). Only the real proof releases, after which a
-  spent-marker PDA makes that binding unreleasable forever.
-  [Config, empty allowlist](https://explorer.solana.com/tx/2hKJngUeAdg3CGJ6p1RzCzc7T5cyaQBuk82X1oocBtxUXY9T9DbJsiKEBqAH2jc8pHbaWrrGSH6XGgP9Ph7qTaCQ?cluster=devnet) ·
-  [Issuer authorized](https://explorer.solana.com/tx/3TpeXa9N6oeQoimyfxWC7BEBFDpFLy2VAqKEKvZukhCfNnePqiBp19KqXtYB5sS2AgdpdrxVUTBeQkyUopfo3gpz?cluster=devnet) ·
-  [Deposit](https://explorer.solana.com/tx/23uwVCXj7ZWgXzdYHQRn9YrUmPeMVXBTJ4847ZxsZdrUkwaFen5NgqYXUsvuExTwJ9MiJpwZBMaqyKnAYPSXg3AW?cluster=devnet) ·
-  [DENY 6105](https://explorer.solana.com/tx/62NBEFfhkuXacPuUWZaFUBmpiPR6NivnDKkwTEQQDiPL5RDD3uq74G1gMSoJrtHb8QcesGyhyeh4GZpv1ChsZQz4?cluster=devnet) ·
-  [DENY 6102](https://explorer.solana.com/tx/67VjPLQprswyR2wS6RaS4k6xFbkNxddrz4sUVu11b2c96A1kPg8i58vPW9ag3YMEB872EkC6eh6rTZA28LDmuuqy?cluster=devnet) ·
-  [RELEASE](https://explorer.solana.com/tx/2zeKqbfirZ9U7VwbL2ngdRm9phRDLobAq1oUtvSz9Jk2A6HUhKviNL2Q8YvAjHLbUjCoWrMWKN6ykEaYTFshe43f?cluster=devnet)
+  transaction — by the upgrade authority, which must name a *different* key as
+  admin; the program rejects the transaction if one key would hold both roles.
+  At deposit the payer **pins** the one issuer whose attestation can ever
+  release that escrow, and the program stores it immutably. Three **validly
+  signed** proofs are then refused *inside the program*: one bound to a
+  different payment (`6105 BindingMismatch`), one from a non-allowlisted issuer
+  (`6102 IssuerNotAuthorized`), and — the one that answers the custody
+  question — one from a rogue issuer that a **compromised admin successfully
+  added to the allowlist**, which still fails `6108 IssuerNotPinned`. Only the
+  real proof releases, after which a spent-marker PDA makes that binding
+  unreleasable forever.
+  [Program upgrade](https://explorer.solana.com/tx/53G8LuvdfBucEKEkqSEVvxAvYwbzBCogQsFaAf2BiZvCt5ma7bnUfMX8tsaGLnwwdawyRUEK6s5aPRw4pcFqY7QZ?cluster=devnet) ·
+  [Config, empty allowlist, admin separated](https://explorer.solana.com/tx/3Xx65mAHMC3Cu7YrPbvmUrCxHzSXpCQYbNqJ693t33XUWM78GKLkXyPuFynijapKoovpNsJgeuijsck655U9Y4Fv?cluster=devnet) ·
+  [Issuer authorized](https://explorer.solana.com/tx/5zY1CUym2A9eYnaGuz7f43SEJY6FQZ15cj9iuk23MGfTSvf1eXzjvSSLzNNAF1UUriAVwxygaPfk3ksNyT7vcBxZ?cluster=devnet) ·
+  [Deposit, issuer pinned](https://explorer.solana.com/tx/2L4HCrVkh1yRrKtASvXntzWhWFX8Q4Bqy6JSzaRwXPCgkHTHhgVdBykFgtbkfLrQ34Uw1d1Y7ZC58NEAT4BhRJLU?cluster=devnet) ·
+  [DENY 6105](https://explorer.solana.com/tx/2LhQ55BWtLTF4LrBF7Qm9vsCPReXr8Bk6RUqWHM7SJ6iwJhCF2xWM2cxJ4u99XUrdbBiT26ssVFDBNo9otTzJLmm?cluster=devnet) ·
+  [DENY 6102](https://explorer.solana.com/tx/2PdFXekEZHf6SD3NLzEY7FGcBZB8484yF2FA9u9A1qBNBuRzfYKz68tAPxvwfKYrKSxegvZ9RNqVLf7ia8LstBZc?cluster=devnet) ·
+  [Rogue issuer allow-listed — SUCCEEDS](https://explorer.solana.com/tx/576zuHiQqgc8jNTGpgpAKzfLV5Ry7ZihJF9g9Ffj3CVYKXVzNc2F8zFrvBvcB5FFhH56PtUGswBKT5WuboLXYgBs?cluster=devnet) ·
+  [DENY 6108 IssuerNotPinned](https://explorer.solana.com/tx/5tVnrNwESCNawdLEB7Q6r2wVys2rEvpRMZrTQUaWEwz5roE2W6fypJ2V8yx1WtJTKFMr3UzVcJqsAEKpy6jGsC6Y?cluster=devnet) ·
+  [Rogue revoked](https://explorer.solana.com/tx/5q9joyuykk3xTBzqj3EPhHyJthDmjL4d98eCRzEPTCEpXYRmvU8YQLqtdgwXJfSfW9E7uXfrcxjdGcXLUCtkH3ib?cluster=devnet) ·
+  [RELEASE](https://explorer.solana.com/tx/3wAaBFu2mRJtGq2MZJ5RQFf9iwaKyTyVrETpLySYrMb9uxbQ74bt6bdhSNS7uuMakuY1eddx5Tu5EC4kheWugiVw?cluster=devnet)
 
-  Both denials are genuinely signed. Tampering with the *signature* instead
+  The `add_issuer` step for the rogue issuer is not simulated and does not
+  fail — a compromised admin really does hold that power, and the run shows it
+  landing on chain. What it cannot do is make the resulting key able to release
+  an escrow pinned to someone else. The admin is a denial-of-service role, not
+  a custody role, and that distinction is the whole claim.
+
+  All three denials are genuinely signed. Tampering with the *signature* instead
   would fail the Ed25519 precompile at transaction verification, the validator
   would drop the transaction, and nothing would land — a dropped transaction
   proves nothing. An on-chain DENY requires a real signature failing a real

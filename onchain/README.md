@@ -17,16 +17,25 @@ Every claim below is a confirmed transaction, not a test fixture.
 
 | Step | What it establishes | Transaction |
 |---|---|---|
-| `init_config` | Config created with an **empty** allowlist — deny-by-default, on chain | [tx](https://explorer.solana.com/tx/2hKJngUeAdg3CGJ6p1RzCzc7T5cyaQBuk82X1oocBtxUXY9T9DbJsiKEBqAH2jc8pHbaWrrGSH6XGgP9Ph7qTaCQ?cluster=devnet) |
-| `add_issuer` | The issuer is authorized in a *separate* transaction, so the deny-by-default state existed on its own | [tx](https://explorer.solana.com/tx/3TpeXa9N6oeQoimyfxWC7BEBFDpFLy2VAqKEKvZukhCfNnePqiBp19KqXtYB5sS2AgdpdrxVUTBeQkyUopfo3gpz?cluster=devnet) |
-| `init_escrow` | Funds move into the vault PDA; the config account is not even touched, so custody setup asserts no authorization | [tx](https://explorer.solana.com/tx/23uwVCXj7ZWgXzdYHQRn9YrUmPeMVXBTJ4847ZxsZdrUkwaFen5NgqYXUsvuExTwJ9MiJpwZBMaqyKnAYPSXg3AW?cluster=devnet) |
-| `release_with_proof` | **DENIED `6105 BindingMismatch`** — genuine signature, authorized issuer, but the attestation is bound to a different payment | [tx](https://explorer.solana.com/tx/62NBEFfhkuXacPuUWZaFUBmpiPR6NivnDKkwTEQQDiPL5RDD3uq74G1gMSoJrtHb8QcesGyhyeh4GZpv1ChsZQz4?cluster=devnet) |
-| `release_with_proof` | **DENIED `6102 IssuerNotAuthorized`** — genuine signature, correct binding, issuer not on the allowlist | [tx](https://explorer.solana.com/tx/67VjPLQprswyR2wS6RaS4k6xFbkNxddrz4sUVu11b2c96A1kPg8i58vPW9ag3YMEB872EkC6eh6rTZA28LDmuuqy?cluster=devnet) |
-| `release_with_proof` | **RELEASED** — funds to the recipient, escrow and vault closed, spent marker created | [tx](https://explorer.solana.com/tx/2zeKqbfirZ9U7VwbL2ngdRm9phRDLobAq1oUtvSz9Jk2A6HUhKviNL2Q8YvAjHLbUjCoWrMWKN6ykEaYTFshe43f?cluster=devnet) |
+| `init_config` | Config created with an **empty** allowlist — deny-by-default, on chain. The upgrade authority signs, but names a *different* key as admin; the account constraints reject the transaction if one key would hold both roles | [tx](https://explorer.solana.com/tx/3Xx65mAHMC3Cu7YrPbvmUrCxHzSXpCQYbNqJ693t33XUWM78GKLkXyPuFynijapKoovpNsJgeuijsck655U9Y4Fv?cluster=devnet) |
+| `add_issuer` | The issuer is authorized in a *separate* transaction, so the deny-by-default state existed on its own | [tx](https://explorer.solana.com/tx/5zY1CUym2A9eYnaGuz7f43SEJY6FQZ15cj9iuk23MGfTSvf1eXzjvSSLzNNAF1UUriAVwxygaPfk3ksNyT7vcBxZ?cluster=devnet) |
+| `init_escrow` | Funds move into the vault PDA and the payer **pins** the one issuer permitted to release this escrow; the config account is not even touched, so custody setup asserts no authorization | [tx](https://explorer.solana.com/tx/2L4HCrVkh1yRrKtASvXntzWhWFX8Q4Bqy6JSzaRwXPCgkHTHhgVdBykFgtbkfLrQ34Uw1d1Y7ZC58NEAT4BhRJLU?cluster=devnet) |
+| `release_with_proof` | **DENIED `6105 BindingMismatch`** — genuine signature, authorized issuer, but the attestation is bound to a different payment | [tx](https://explorer.solana.com/tx/2LhQ55BWtLTF4LrBF7Qm9vsCPReXr8Bk6RUqWHM7SJ6iwJhCF2xWM2cxJ4u99XUrdbBiT26ssVFDBNo9otTzJLmm?cluster=devnet) |
+| `release_with_proof` | **DENIED `6102 IssuerNotAuthorized`** — genuine signature, correct binding, issuer not on the allowlist | [tx](https://explorer.solana.com/tx/2PdFXekEZHf6SD3NLzEY7FGcBZB8484yF2FA9u9A1qBNBuRzfYKz68tAPxvwfKYrKSxegvZ9RNqVLf7ia8LstBZc?cluster=devnet) |
+| `add_issuer` (rogue) | **SUCCEEDS.** Run with the admin key in hand: a compromised admin really can allow-list an issuer it controls, and here it lands on chain | [tx](https://explorer.solana.com/tx/576zuHiQqgc8jNTGpgpAKzfLV5Ry7ZihJF9g9Ffj3CVYKXVzNc2F8zFrvBvcB5FFhH56PtUGswBKT5WuboLXYgBs?cluster=devnet) |
+| `release_with_proof` | **DENIED `6108 IssuerNotPinned`** — that newly allow-listed rogue issuer signs a valid, correctly bound, fresh attestation and still cannot release, because it is not the issuer the payer pinned at deposit. This is the compromised-admin result | [tx](https://explorer.solana.com/tx/5tVnrNwESCNawdLEB7Q6r2wVys2rEvpRMZrTQUaWEwz5roE2W6fypJ2V8yx1WtJTKFMr3UzVcJqsAEKpy6jGsC6Y?cluster=devnet) |
+| `remove_issuer` | The rogue issuer is revoked; allow-list changes take effect on the next block | [tx](https://explorer.solana.com/tx/5q9joyuykk3xTBzqj3EPhHyJthDmjL4d98eCRzEPTCEpXYRmvU8YQLqtdgwXJfSfW9E7uXfrcxjdGcXLUCtkH3ib?cluster=devnet) |
+| `release_with_proof` | **RELEASED** — funds to the recipient, escrow and vault closed, spent marker created | [tx](https://explorer.solana.com/tx/3wAaBFu2mRJtGq2MZJ5RQFf9iwaKyTyVrETpLySYrMb9uxbQ74bt6bdhSNS7uuMakuY1eddx5Tu5EC4kheWugiVw?cluster=devnet) |
 
-Reproduce with `go run -tags devnet ./cmd/escrowdevnet -mode all`. The tool fails
+These ran against [this program upgrade](https://explorer.solana.com/tx/53G8LuvdfBucEKEkqSEVvxAvYwbzBCogQsFaAf2BiZvCt5ma7bnUfMX8tsaGLnwwdawyRUEK6s5aPRw4pcFqY7QZ?cluster=devnet), which is the hardened
+build carrying issuer pinning and role separation.
+
+Reproduce with `go run -tags devnet ./cmd/escrowdevnet -mode all`, or the
+compromised-admin case on its own with `-mode deny-unpinned`. The tool fails
 loudly in both directions: if a transaction expected to revert instead succeeds,
-it stops and reports that the enforcement property does not hold.
+it stops and reports that the enforcement property does not hold. Note that the
+`add_issuer` (rogue) step is expected to **succeed** — a run in which it failed
+would prove nothing about what the pin protects.
 
 ## What changes when enforcement moves on-chain
 
