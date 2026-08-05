@@ -119,7 +119,7 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 
 	"github.com/rudizee007/spt-txn-x402-solana/escrow"
-	"github.com/rudizee007/spt-txn-x402-solana/gate"
+	"github.com/rudizee007/spt-txn-pep/gate"
 	"github.com/rudizee007/spt-txn-x402-solana/settle"
 )
 

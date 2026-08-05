@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/rudizee007/spt-txn-x402-solana/gate"
+	"github.com/rudizee007/spt-txn-pep/gate"
 )
 
 // This file is the join between the two enforcement points, and it exists mainly

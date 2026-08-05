@@ -3,7 +3,7 @@ package escrow
 import (
 	"testing"
 
-	"github.com/rudizee007/spt-txn-x402-solana/gate"
+	"github.com/rudizee007/spt-txn-pep/gate"
 )
 
 // TestWellKnownAddressesRoundTrip re-encodes every built-in address and compares

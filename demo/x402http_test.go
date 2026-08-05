@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rudizee007/spt-txn-x402-solana/gate"
+	"github.com/rudizee007/spt-txn-pep/gate"
 )
 
 func httpFixture(price uint64) (*httptest.Server, *HTTPClient, time.Time) {

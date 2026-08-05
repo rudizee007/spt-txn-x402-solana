@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/rudizee007/spt-txn-x402-solana/demo"
-	"github.com/rudizee007/spt-txn-x402-solana/gate"
+	"github.com/rudizee007/spt-txn-pep/gate"
 )
 
 func seed(b byte) [32]byte {

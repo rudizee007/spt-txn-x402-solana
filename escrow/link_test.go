@@ -3,7 +3,7 @@ package escrow
 import (
 	"testing"
 
-	"github.com/rudizee007/spt-txn-x402-solana/gate"
+	"github.com/rudizee007/spt-txn-pep/gate"
 )
 
 func b58(k [32]byte) string { return gate.EncodeBase58(k[:]) }

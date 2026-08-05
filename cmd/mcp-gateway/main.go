@@ -27,9 +27,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/rudizee007/spt-txn-x402-solana/gate"
-	"github.com/rudizee007/spt-txn-x402-solana/mcpgate"
-	"github.com/rudizee007/spt-txn-x402-solana/receipt"
+	"github.com/rudizee007/spt-txn-pep/gate"
+	"github.com/rudizee007/spt-txn-pep/mcpgate"
+	"github.com/rudizee007/spt-txn-pep/receipt"
 	"github.com/rudizee007/spt-txn-x402-solana/settle"
 )
 
