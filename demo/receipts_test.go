@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/rudizee007/spt-txn-pep/gate"
-	"github.com/rudizee007/spt-txn-pep/receipt"
+	"github.com/rudizee007/spt-txn-pep/translog"
 )
 
 // httptestServer starts an x402 resource server over the given accounts at the
@@ -63,7 +63,7 @@ func TestSavedReceiptsCarryTheSameRoot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	loaded, err := receipt.LoadLog(path)
+	loaded, err := translog.LoadLog(path)
 	if err != nil {
 		t.Fatalf("LoadLog: %v", err)
 	}
@@ -98,7 +98,7 @@ func loadedPubKey(t *testing.T, c *HTTPClient) []byte {
 	if err := c.SaveReceipts(path); err != nil {
 		t.Fatal(err)
 	}
-	l, err := receipt.LoadLog(path)
+	l, err := translog.LoadLog(path)
 	if err != nil {
 		t.Fatal(err)
 	}

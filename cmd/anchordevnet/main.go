@@ -39,7 +39,7 @@ import (
 	confirm "github.com/gagliardetto/solana-go/rpc/sendAndConfirmTransaction"
 	"github.com/gagliardetto/solana-go/rpc/ws"
 
-	"github.com/rudizee007/spt-txn-pep/receipt"
+	"github.com/rudizee007/spt-txn-pep/translog"
 )
 
 // SPL Memo program (mainnet == devnet).
@@ -64,18 +64,18 @@ func defaultKeypair() string {
 
 func main() {
 	keypairPath := flag.String("keypair", defaultKeypair(), "path to a Solana CLI keypair json (devnet)")
-	logPath := flag.String("receipts", "receipts.json", "signed receipt log to anchor (written by cmd/x402demo)")
-	proofSeq := flag.Int("proof", 1, "receipt index to demonstrate an inclusion proof for")
+	logPath := flag.String("receipts", "receipts.json", "signed transparency log to anchor (written by cmd/x402demo)")
+	proofSeq := flag.Int("proof", 1, "log-entry index to demonstrate an inclusion proof for")
 	flag.Parse()
 	ctx := context.Background()
 
 	// 1. Load the evidence and verify it before anything else happens. LoadLog
 	//    re-checks every signature, re-walks the hash chain, and recomputes the
 	//    root from the receipts themselves. Anything short of sound fails closed.
-	rlog, err := receipt.LoadLog(*logPath)
+	rlog, err := translog.LoadLog(*logPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			log.Fatalf("no receipt log at %s — run `go run ./cmd/x402demo` first, it writes one", *logPath)
+			log.Fatalf("no transparency log at %s — run `go run ./cmd/x402demo` first, it writes one", *logPath)
 		}
 		log.Fatalf("load receipt log %s: %v", *logPath, err)
 	}
@@ -143,7 +143,7 @@ func main() {
 	if !ok {
 		log.Fatalf("receipt %d not found", *proofSeq)
 	}
-	verified := receipt.VerifyInclusion(root, leaf.CanonicalBytes(), *proofSeq, rlog.Len(), proof)
+	verified := translog.VerifyInclusion(root, leaf.CanonicalBytes(), *proofSeq, rlog.Len(), proof)
 
 	fmt.Printf("anchored %d receipts on devnet\n", rlog.Len())
 	fmt.Printf("  merkle root: %s\n", rootHex)

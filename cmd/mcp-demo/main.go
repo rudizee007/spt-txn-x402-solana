@@ -16,7 +16,7 @@ import (
 
 	"github.com/rudizee007/spt-txn-pep/gate"
 	"github.com/rudizee007/spt-txn-pep/mcpgate"
-	"github.com/rudizee007/spt-txn-pep/receipt"
+	"github.com/rudizee007/spt-txn-pep/translog"
 )
 
 func b32(x byte) [32]byte {
@@ -35,7 +35,7 @@ func addr(x byte) string {
 func main() {
 	now := time.Unix(1_700_000_000, 0)
 	_, rk, _ := ed25519.GenerateKey(nil)
-	log := receipt.NewLog(rk.Public().(ed25519.PublicKey))
+	log := translog.NewLog(rk.Public().(ed25519.PublicKey))
 
 	usdc := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	merchant := addr(0x11)
@@ -62,7 +62,7 @@ func main() {
 	call := func(label string, c mcpgate.ToolCall) {
 		r := e.Authorize(c)
 		if r.Allowed() {
-			fmt.Printf("  ALLOW   %-46s  receipt %s\n", label, r.Receipt)
+			fmt.Printf("  ALLOW   %-46s  log entry %s\n", label, r.LogEntry)
 		} else {
 			fmt.Printf("  DENY    %-46s  %s\n", label, r.Reason)
 		}

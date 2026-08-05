@@ -22,8 +22,8 @@ import (
 	"net/http/httptest"
 	"time"
 
-	"github.com/rudizee007/spt-txn-x402-solana/demo"
 	"github.com/rudizee007/spt-txn-pep/gate"
+	"github.com/rudizee007/spt-txn-x402-solana/demo"
 )
 
 func seed(b byte) [32]byte {
@@ -35,7 +35,7 @@ func seed(b byte) [32]byte {
 }
 
 func main() {
-	out := flag.String("receipts", "receipts.json", "path to write the signed receipt log (read by cmd/anchordevnet); empty to skip")
+	out := flag.String("receipts", "receipts.json", "path to write the signed transparency log (read by cmd/anchordevnet); empty to skip")
 	flag.Parse()
 
 	acc := demo.NewAccounts()
@@ -79,12 +79,12 @@ func main() {
 	fmt.Printf("\nevidence: %d signed receipts, merkle root %x\n", c.ReceiptCount(), root)
 
 	if *out == "" {
-		fmt.Println("          receipt log not written (-receipts was empty)")
+		fmt.Println("          transparency log not written (-receipts was empty)")
 		return
 	}
 	if err := c.SaveReceipts(*out); err != nil {
-		log.Fatalf("write receipt log: %v", err)
+		log.Fatalf("write transparency log: %v", err)
 	}
-	fmt.Printf("          receipt log: %s\n", *out)
+	fmt.Printf("          transparency log: %s\n", *out)
 	fmt.Println("          anchor this exact root with:  go run -tags devnet ./cmd/anchordevnet")
 }

@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/rudizee007/spt-txn-pep/gate"
-	"github.com/rudizee007/spt-txn-pep/receipt"
+	"github.com/rudizee007/spt-txn-pep/translog"
 	"github.com/rudizee007/spt-txn-x402-solana/settle"
 )
 
@@ -183,7 +183,7 @@ type Client struct {
 	acc      Accounts
 	scope    Scope
 	spend    gate.SpendLog
-	receipts *receipt.Log
+	receipts *translog.Log
 	rkey     ed25519.PrivateKey
 }
 
@@ -196,7 +196,7 @@ func NewClient(acc Accounts, scope Scope) *Client {
 		acc:      acc,
 		scope:    scope,
 		spend:    gate.NewMemSpendLog(),
-		receipts: receipt.NewLog(rpub),
+		receipts: translog.NewLog(rpub),
 		rkey:     rkey,
 	}
 }
@@ -222,7 +222,7 @@ func (c *Client) Pay(server *ResourceServer, token gate.Token, now time.Time, ta
 	// Gate: ALLOW/DENY before signing.
 	d := gate.Evaluate(c.acc.allowlist(), req, token, ScopePolicy{scope: c.scope}, c.spend, now)
 	// Evidence as a byproduct: every decision emits a signed, chained receipt.
-	_, _ = c.receipts.Append(c.rkey, receipt.Decision(d.Class), d.Binding, now.Unix())
+	_, _ = c.receipts.Append(c.rkey, translog.Decision(d.Class), d.Binding, now.Unix())
 	if d.Class != gate.Allow {
 		return Outcome{Decision: d.Class, Reason: d.Reason}
 	}

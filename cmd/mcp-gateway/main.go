@@ -29,7 +29,7 @@ import (
 
 	"github.com/rudizee007/spt-txn-pep/gate"
 	"github.com/rudizee007/spt-txn-pep/mcpgate"
-	"github.com/rudizee007/spt-txn-pep/receipt"
+	"github.com/rudizee007/spt-txn-pep/translog"
 	"github.com/rudizee007/spt-txn-x402-solana/settle"
 )
 
@@ -106,7 +106,7 @@ func main() {
 			Allowlist: gate.Allowlist{Schemes: map[string]byte{"exact": 1}, Networks: map[string]byte{"solana:devnet": 2}},
 			Policy:    mcpgate.ExactPayment{Asset: asset, PayTo: merchant, Resource: "invoice:42", MaxAmount: 1_000_000},
 			Spend:     gate.NewMemSpendLog(),
-			Log:       receipt.NewLog(rk.Public().(ed25519.PublicKey)),
+			Log:       translog.NewLog(rk.Public().(ed25519.PublicKey)),
 			RKey:      rk,
 			// real clock (Now nil → time.Now)
 		},
@@ -235,11 +235,11 @@ func (s *server) toolsCall(params json.RawMessage) interface{} {
 	sig, err := settlePayment(to, micro)
 	switch {
 	case err != nil:
-		return toolText(fmt.Sprintf("AUTHORIZED (receipt %s) — but the devnet test settlement failed: %v", r.Receipt, err), true)
+		return toolText(fmt.Sprintf("AUTHORIZED (log entry %s) — but the devnet test settlement failed: %v", r.LogEntry, err), true)
 	case sig != "":
-		return toolText(fmt.Sprintf("AUTHORIZED by the SPT-Txn enforcement point. The enforcement point settled the payment on Solana devnet (test tokens, no real value). Receipt %s.\n  tx: https://explorer.solana.com/tx/%s?cluster=devnet", r.Receipt, sig), false)
+		return toolText(fmt.Sprintf("AUTHORIZED by the SPT-Txn enforcement point. The enforcement point settled the payment on Solana devnet (test tokens, no real value). Transparency-log entry %s.\n  tx: https://explorer.solana.com/tx/%s?cluster=devnet", r.LogEntry, sig), false)
 	default:
-		return toolText(fmt.Sprintf("AUTHORIZED by the SPT-Txn enforcement point (test mode; no settlement performed). Receipt %s.", r.Receipt), false)
+		return toolText(fmt.Sprintf("AUTHORIZED by the SPT-Txn enforcement point (test mode; no settlement performed). Transparency-log entry %s.", r.LogEntry), false)
 	}
 }
 

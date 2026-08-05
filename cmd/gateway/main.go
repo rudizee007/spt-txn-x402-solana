@@ -19,7 +19,7 @@ import (
 
 	"github.com/rudizee007/spt-txn-pep/gate"
 	"github.com/rudizee007/spt-txn-pep/gateway"
-	"github.com/rudizee007/spt-txn-pep/receipt"
+	"github.com/rudizee007/spt-txn-pep/translog"
 )
 
 func b32(x byte) [32]byte {
@@ -46,7 +46,7 @@ func (c ceilingPolicy) Verify(pr gate.PaymentRequirements, _ gate.Token) error {
 func main() {
 	now := time.Unix(1_700_000_000, 0)
 	_, rk, _ := ed25519.GenerateKey(nil)
-	log := receipt.NewLog(rk.Public().(ed25519.PublicKey))
+	log := translog.NewLog(rk.Public().(ed25519.PublicKey))
 
 	usdc := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 	pep := &gateway.PEP{

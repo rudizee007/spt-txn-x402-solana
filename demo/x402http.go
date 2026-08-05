@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/rudizee007/spt-txn-pep/gate"
-	"github.com/rudizee007/spt-txn-pep/receipt"
+	"github.com/rudizee007/spt-txn-pep/translog"
 	"github.com/rudizee007/spt-txn-x402-solana/settle"
 )
 
@@ -192,7 +192,7 @@ type HTTPClient struct {
 	scope    Scope
 	spend    gate.SpendLog
 	client   *http.Client
-	receipts *receipt.Log
+	receipts *translog.Log
 	rkey     ed25519.PrivateKey
 }
 
@@ -205,7 +205,7 @@ func NewHTTPClient(acc Accounts, scope Scope) *HTTPClient {
 		scope:    scope,
 		spend:    gate.NewMemSpendLog(),
 		client:   &http.Client{},
-		receipts: receipt.NewLog(rpub),
+		receipts: translog.NewLog(rpub),
 		rkey:     rkey,
 	}
 }
@@ -247,7 +247,7 @@ func (c *HTTPClient) Pay(url string, token gate.Token, now time.Time, tamper boo
 	// 2. Gate: ALLOW / DENY before signing.
 	d := gate.Evaluate(c.acc.allowlist(), req, token, ScopePolicy{scope: c.scope}, c.spend, now)
 	// Evidence as a byproduct: every decision emits a signed, chained receipt.
-	_, _ = c.receipts.Append(c.rkey, receipt.Decision(d.Class), d.Binding, now.Unix())
+	_, _ = c.receipts.Append(c.rkey, translog.Decision(d.Class), d.Binding, now.Unix())
 	if d.Class != gate.Allow {
 		return Outcome{Decision: d.Class, Reason: d.Reason}, nil
 	}
