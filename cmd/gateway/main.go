@@ -9,14 +9,20 @@ package main
 
 import (
 	"crypto/ed25519"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
+	"sync"
 	"time"
 
+	"github.com/rudizee007/spt-txn-pep/evidence"
 	"github.com/rudizee007/spt-txn-pep/gate"
 	"github.com/rudizee007/spt-txn-pep/gateway"
 	"github.com/rudizee007/spt-txn-pep/translog"
@@ -43,13 +49,53 @@ func (c ceilingPolicy) Verify(pr gate.PaymentRequirements, _ gate.Token) error {
 	return nil
 }
 
+// demoEmitter is a worked example of evidence.Emitter, and the smallest honest
+// one: it records the Transaction Receipt for every decision in memory and
+// returns a content hash as the locator.
+//
+// It deliberately does NOT sign or canonicalize. Signing a receipt means the
+// JCS (RFC 8785) canonical form under a domain-separation tag, and that
+// implementation lives next to the verifier in the reference engine
+// (pkg/pepevidence), because issuer and verifier must canonicalize identically
+// by construction. A demo that rolled its own signing would emit receipts that
+// look right and do not interoperate — so this one emits real receipts and
+// leaves the crypto to the module that owns it.
+//
+// In-memory, so nothing here is durable; it does not implement
+// evidence.Durable, which is exactly the honest answer.
+type demoEmitter struct {
+	mu       sync.Mutex
+	receipts []evidence.Receipt
+}
+
+func (e *demoEmitter) Emit(r evidence.Receipt) (string, error) {
+	b, err := json.Marshal(r)
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(b)
+	e.mu.Lock()
+	e.receipts = append(e.receipts, r)
+	e.mu.Unlock()
+	return base64.RawURLEncoding.EncodeToString(sum[:]), nil
+}
+
+func (e *demoEmitter) count() int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return len(e.receipts)
+}
+
 func main() {
 	now := time.Unix(1_700_000_000, 0)
 	_, rk, _ := ed25519.GenerateKey(nil)
 	log := translog.NewLog(rk.Public().(ed25519.PublicKey))
 
 	usdc := "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-	pep := &gateway.PEP{
+	em := &demoEmitter{}
+	pep, err := gateway.NewPEP(gateway.PEP{
+		Name:      "x402-demo-gateway",
+		Evidence:  em,
 		Allowlist: gate.Allowlist{Schemes: map[string]byte{"exact": 1}, Networks: map[string]byte{"solana:devnet": 2}},
 		Policy:    ceilingPolicy{max: 5_000_000},
 		Spend:     gate.NewMemSpendLog(),
@@ -67,6 +113,10 @@ func main() {
 			}
 		},
 		Now: func() time.Time { return now },
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "gateway:", err)
+		os.Exit(1)
 	}
 
 	protected := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +133,7 @@ func main() {
 
 	fmt.Println("SPT-Txn gateway (PEP) + transparency log —", ts.URL)
 	fmt.Println("ceiling 5.000000 USDC, single-use tokens")
+	fmt.Printf("draft-03 conformant (emits a receipt at every decision): %v\n", pep.Conformant())
 	fmt.Println()
 
 	get := func(path, label, token string) {
@@ -114,7 +165,9 @@ func main() {
 		fmt.Printf("GET %-28s %s\n", path, firstLine(string(body)))
 	}
 	show("/transparency/root")
-	show("/transparency/receipt/0")
+	show("/transparency/entry/0")
+
+	fmt.Printf("\nTransaction Receipts emitted: %d  (one per decision, denials included)\n", em.count())
 }
 
 func firstLine(s string) string {
