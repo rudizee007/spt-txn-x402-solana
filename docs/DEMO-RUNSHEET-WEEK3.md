@@ -25,7 +25,7 @@ Week 3 story, not an erratum: the split is what makes adoption cheap.
 | 0:00–0:15 | Title, or `spt-txn-pep` `README.md` on screen | "An authorization layer only matters if people can actually adopt it. So this week the enforcement core moved into its own module — any x402 server wraps one middleware and gets per-transaction authorization plus a tamper-evident audit trail." |
 | 0:15–0:30 | The one-liner in `gateway/README.md`, then `cat go.mod` — three lines, no `require` block | "This is the whole integration — you wrap your existing handler. And this is why the split mattered: the module's go.mod has no dependencies at all. Not 'few' — none, and CI fails the build if one appears. Before the split, wrapping one handler pulled a blockchain SDK and a Mongo driver into your dependency graph." |
 | 0:30–1:00 | `go run ./cmd/gateway` *(five request lines print)* | "Here it is enforcing on every request. Authorized — served. The same token replayed — refused, single-use. Over budget — denied. No authorization at all — rejected. A fresh token — served again." |
-| 1:00–1:20 | `/transparency/root`, then `/transparency/entry/0` — point at the matching root and at `"verified":true` | "Every decision that carried an identity emitted a Transaction Receipt — the record the spec requires — and a signed entry in a Merkle transparency log. The auditor fetches the root, then proves any single decision belongs to it — same root, inclusion proof, verified — without seeing the others. Note the count is four, not five: a request presenting no token is refused without being written, so anonymous traffic can't drive unbounded signing." |
+| 1:00–1:20 | `/transparency/root`, then `/transparency/entry/0` — point at the matching root and at `"verified":true` | "Every decision that presented a token emitted a Transaction Receipt — the record the spec requires — and a signed entry in a Merkle transparency log. The auditor fetches the root, then proves any single decision belongs to it — same root, inclusion proof, verified — without seeing the others. Note the count is four, not five: a request presenting no token is refused without being written, so anonymous traffic can't drive unbounded signing." |
 | 1:20–1:30 | Close card | "One middleware, zero dependencies. Authorization on every request, and audit evidence as a byproduct. Proof of concept — not audited, not in production — but that's how this reaches every x402 server, not just ours." |
 
 ## Commands, in order
@@ -61,6 +61,14 @@ structural.
   deliberately does not sign or canonicalize — that belongs next to the verifier
   in the engine. If you say "signed", mean the transparency-log entries, which
   are.
+- **The demo's tokens are not signed credentials.** `gateway.EncodeToken` emits
+  base64 of `{nonce, expiry}` — no signature, no CAT, no delegation chain. What
+  this demo proves is the enforcement *shape*: deny-by-default, single-use
+  nonces, an amount ceiling, fail-closed, and evidence on every decision. The
+  eight-step cryptographic verifier lives in the engine and is not wired to this
+  edge path yet — see `docs/PRESENTATION-SEAM.md` in the `spt-txn-pep` module. Do not say or imply that a token
+  signature is being checked here; a judge who opens `EncodeToken` sees it in
+  five seconds, and the honest version is a better story anyway.
 
 ## Video description
 
