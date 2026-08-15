@@ -1,8 +1,16 @@
 # Colosseum Eternal — submission packet
 
-Copy-paste reference for the Eternal portal. One thing is still yours to supply
-(marked **TODO**): the demo-video URL. All three repos below were confirmed
-publicly reachable, signed out, on 2026-08-04.
+Copy-paste reference for the Eternal portal. Items still to supply are marked
+**TODO**. All three repos below were confirmed publicly reachable, signed out,
+on 2026-08-04.
+
+Colosseum asks for **two** videos at submission, not one: a **pitch
+presentation (max 3 minutes)** covering team, problem, audience, any user
+validation and the vision, and a **technical walkthrough (under 3 minutes)**
+covering implementation, design choices, stack and the Solana integration. The
+weekly updates are separate and go in the Eternal dashboard. A repo may be
+private if judges are granted access — that is an explicitly supported route,
+and forgetting to grant it is on their list of common mistakes.
 
 ## One-liner
 
@@ -29,7 +37,10 @@ on-chain. Drop-in middleware adds it to any x402 server in one line.
 - **On-chain escrow:** https://github.com/rudizee007/spt-txn-x402-escrow
 - **Reference engine:** https://github.com/rudizee007/spt-txn-poc
 - **Week 1 update video:** https://youtu.be/R_f7R0nkM1M
-- **Demo video:** *(TODO: upload + paste URL)*
+- **Week 2 update video:** https://youtu.be/gKuELvPePS8
+- **Week 3 update video:** https://youtu.be/7hG7lTwe7i4
+- **Pitch video (max 3 min):** *(TODO: record + paste URL)*
+- **Technical walkthrough (under 3 min):** *(TODO: record + paste URL)*
 - **Devnet settlement tx (authorization-gated USDC, shown in the demo):** https://explorer.solana.com/tx/376oVo5dNc8tVgJiXB6eVpckNhTNchxbrgs19ShZmcmNx1ZxkN6v8Hvw6TjFVRxo2Xzs1w1RDPFT6BdxbsPDU1u2?cluster=devnet
 - **Devnet settlement tx (payer → merchant, earlier run):** https://explorer.solana.com/tx/3H4MfiYrsZ66pK23VkCFeKPpN18u2YiJQvWDnqTBNp4Hy541kMKtDWuVV9xnBN9Kp9R8WBiRN6m4uaBrCm76rNkX?cluster=devnet
 - **Devnet evidence anchor tx (receipt root via Memo):** https://explorer.solana.com/tx/2CQpKfHvfMTd2bDp5mYAFB5giaiqLKWdAHroE74CRVf271n9VEmdbrRne6m5M4DyeKNjw9TEwxoqVBuH7YVAU1m9?cluster=devnet
@@ -77,8 +88,12 @@ MiCA), and the x402 gateway — the shortest paths to recurring revenue.
 - [ ] Main repo public + §0-clean (final grep: no hook / private / disclosure refs)
 - [x] Escrow repo published public (2026-07-19)
 - [x] Release-on-proof escrow proven on devnet: deny 6105, deny 6102, release
-- [ ] Demo video recorded, uploaded, and linked here
+- [ ] Pitch video (max 3 min) recorded, uploaded, and linked here
+- [ ] Technical walkthrough (under 3 min) recorded, uploaded, and linked here
 - [ ] Product page filled (from `ETERNAL-PRODUCT.md`); all links above resolve
 - [x] Week 1 update video posted (https://youtu.be/R_f7R0nkM1M)
-- [ ] Weekly update videos 2–4 posted
+- [x] Week 2 update video posted (https://youtu.be/gKuELvPePS8)
+- [x] Week 3 update video posted (https://youtu.be/7hG7lTwe7i4)
+- [ ] Week 3 update submitted in the Eternal dashboard
+- [ ] Week 4 update video posted and submitted
 - [ ] Devnet tx links open on the explorer
