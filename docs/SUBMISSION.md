@@ -44,6 +44,12 @@ on-chain. Drop-in middleware adds it to any x402 server in one line.
 - **Devnet settlement tx (authorization-gated USDC, shown in the demo):** https://explorer.solana.com/tx/376oVo5dNc8tVgJiXB6eVpckNhTNchxbrgs19ShZmcmNx1ZxkN6v8Hvw6TjFVRxo2Xzs1w1RDPFT6BdxbsPDU1u2?cluster=devnet
 - **Devnet settlement tx (payer → merchant, earlier run):** https://explorer.solana.com/tx/3H4MfiYrsZ66pK23VkCFeKPpN18u2YiJQvWDnqTBNp4Hy541kMKtDWuVV9xnBN9Kp9R8WBiRN6m4uaBrCm76rNkX?cluster=devnet
 - **Devnet evidence anchor tx (receipt root via Memo):** https://explorer.solana.com/tx/2CQpKfHvfMTd2bDp5mYAFB5giaiqLKWdAHroE74CRVf271n9VEmdbrRne6m5M4DyeKNjw9TEwxoqVBuH7YVAU1m9?cluster=devnet
+- **Identity → chain, one issuer across both halves** (Keycloak-issued CAT signed by the key the escrow trusts; see `docs/IDENTITY-TO-CHAIN.md`):
+  - Release by the pinned issuer: https://explorer.solana.com/tx/5GFsUkmVkjQGc2XKuB8XsZYBQwAVMSCehzWN9D3c6Q5rKoR6zYpSz4kbTXxguQ2iRiqgBTzt6E2d7PDcpPTXtTAw?cluster=devnet
+  - **Compromised admin allowlists a rogue issuer — succeeds:** https://explorer.solana.com/tx/3wqHHMUKQ7ircM5cxq5SvBomDSQFmehEX8RfpXrLRkvfajFMNHBfY79Xt4cRCJ4rTaCCUK72zmx1RZgi6JH8Erz7?cluster=devnet
+  - **…and the release still reverts, 6108 IssuerNotPinned:** https://explorer.solana.com/tx/4nD38G84FhuXpZ9fMs2Pzpf1kN49X6WhNLHEMEcUvyB4QWRZbYGQx5Dm6XUK7RDsRdga69nrTXtPNBYHSEUYraAf?cluster=devnet
+  - Genuine signature, wrong binding — 6105: https://explorer.solana.com/tx/2DzZtQxYjQSXkkndLqWGy6PnigHi64Fbp7JCz9Q2Pk8FfycE9d2crBgafgj39BCdScqo8avLMrkrazPvahayXrSk?cluster=devnet
+  - Genuine signature, unlisted issuer — 6102: https://explorer.solana.com/tx/3XTdn6LEgMVPkzWyGus8Y9VY4QZWUs9NDmLHBUB8DMWM3SHigwyLBFk1EckyFpY1qC6AKBJvbbBFzrEkPXT761mj?cluster=devnet
 - **Escrow program (deployed, devnet):** https://explorer.solana.com/address/C9kTmtYm5V8cFfNvgzJAcVfM2zYN1Pqv245Xe27h4NwZ?cluster=devnet
 - **Escrow — program upgraded to the hardened build** (issuer pinning + role separation): https://explorer.solana.com/tx/53G8LuvdfBucEKEkqSEVvxAvYwbzBCogQsFaAf2BiZvCt5ma7bnUfMX8tsaGLnwwdawyRUEK6s5aPRw4pcFqY7QZ?cluster=devnet
 - **Escrow — deny-by-default config created** (empty allowlist; the upgrade authority signs but names a *different* key as admin — the program rejects the transaction if one key would hold both): https://explorer.solana.com/tx/3Xx65mAHMC3Cu7YrPbvmUrCxHzSXpCQYbNqJ693t33XUWM78GKLkXyPuFynijapKoovpNsJgeuijsck655U9Y4Fv?cluster=devnet
