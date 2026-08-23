@@ -54,7 +54,7 @@ func main() {
 
 	fmt.Println("SPT-Txn — MCP payment enforcement demo (public reference)")
 	fmt.Println()
-	fmt.Println("An AI agent has a make_payment tool. The human approved it for exactly:")
+	fmt.Println("An AI agent has an authorize_payment tool. The human approved it for exactly:")
 	fmt.Println("  pay  <= 1.000000 USDC  to the merchant  for  invoice:42")
 	fmt.Println("Every tool-call is enforced by the same gate as the HTTP x402 PEP.")
 	fmt.Println()
@@ -78,25 +78,25 @@ func main() {
 	fmt.Println("The agent makes tool-calls; the enforcement point decides:")
 	fmt.Println()
 
-	call("make_payment(merchant, 1 USDC, invoice:42)", legit(0x01))
+	call("authorize_payment(merchant, 1 USDC, invoice:42)", legit(0x01))
 
 	h1 := legit(0x02)
 	h1.To = attacker
-	call("make_payment(ATTACKER, 1 USDC, invoice:42)", h1)
+	call("authorize_payment(ATTACKER, 1 USDC, invoice:42)", h1)
 
 	h2 := legit(0x03)
 	h2.Amount = "1000000000"
-	call("make_payment(merchant, 1000 USDC, invoice:42)", h2)
+	call("authorize_payment(merchant, 1000 USDC, invoice:42)", h2)
 
 	h3 := legit(0x04)
 	h3.Resource = "invoice:999"
-	call("make_payment(merchant, 1 USDC, invoice:999)", h3)
+	call("authorize_payment(merchant, 1 USDC, invoice:999)", h3)
 
-	call("make_payment replay (reused authorization)", legit(0x01))
+	call("authorize_payment replay (reused authorization)", legit(0x01))
 
 	ex := legit(0x05)
 	ex.Expiry = now.Add(-time.Minute)
-	call("make_payment after the approved window expired", ex)
+	call("authorize_payment after the approved window expired", ex)
 
 	root := log.Root()
 	fmt.Println()

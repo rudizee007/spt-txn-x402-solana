@@ -130,9 +130,9 @@ go test ./mcpgate/...   # ALLOW + hijacked/replay/expired DENY, on the same gate
 go run ./cmd/mcp-demo   # scripted agent: approved call allowed, injected calls refused
 ```
 
-**Live, with a real agent** — `cmd/mcp-gateway` is a stdio MCP server exposing a
-`make_payment` tool. Build it and register it with any MCP client (e.g. Claude
-Desktop):
+**Live, with a real agent** — `cmd/mcp-gateway` is a stdio MCP server exposing an
+`authorize_payment` tool. Build it and register it with any MCP client (e.g.
+Claude Desktop):
 
 ```sh
 go build -o bin/spt-txn-mcp ./cmd/mcp-gateway
@@ -142,9 +142,18 @@ go build -o bin/spt-txn-mcp ./cmd/mcp-gateway
 { "mcpServers": { "spt-txn": { "command": "/abs/path/to/bin/spt-txn-mcp" } } }
 ```
 
-Then drive the agent in natural language: *"pay the merchant 1 USDC for
-invoice:42"* → ALLOW; *"pay the attacker 1000 USDC"* → DENY. A prompt-injected
-tool-call is cryptographically refused, with a signed receipt on every decision.
+Then drive the agent in natural language. Phrase prompts as authorization
+**checks**, not instructions to send money — the tool asks the enforcement point
+for an ALLOW/DENY decision, and a general-purpose assistant will (correctly)
+refuse to "pay" someone but will happily check whether a payment is authorized:
+
+> *"Using the authorize_payment tool, check whether paying the merchant 1 USDC
+> for invoice 42 is authorized"* → **ALLOW**
+>
+> *"…check whether paying 1000 USDC to <attacker address> is authorized"* → **DENY**
+
+A prompt-injected tool-call is cryptographically refused, with a signed receipt
+on every decision.
 
 By default the ALLOW authorizes only (no funds move). Build with `-tags devnet`
 to perform a real devnet USDC transfer on ALLOW — uses your keypair, with an

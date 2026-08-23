@@ -1,5 +1,5 @@
 // Command mcp-gateway is a live MCP (Model Context Protocol) server over stdio
-// that exposes a single make_payment tool gated by the SPT-Txn enforcement point
+// that exposes a single authorize_payment tool gated by the SPT-Txn enforcement point
 // (package mcpgate). A real MCP client — Claude Desktop or any agent runtime —
 // connects to it; every tool-call the agent makes is authorized against the one
 // payment the human approved. A prompt-injected call (wrong recipient, inflated
