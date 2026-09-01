@@ -18,13 +18,16 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rudizee007/spt-txn-pep/gate"
@@ -93,7 +96,13 @@ type server struct {
 }
 
 func main() {
-	_, rk, _ := ed25519.GenerateKey(nil)
+	_, rk, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		// Without a receipt key there is no evidence, and a decision with no
+		// evidence is not a decision this system is willing to make.
+		fmt.Fprintln(os.Stderr, "fatal: receipt key:", err)
+		os.Exit(1)
+	}
 	merchant := demoMerchant()
 	asset := gate.EncodeBase58(settle.USDCDevnetMint[:]) // devnet USDC mint
 
@@ -183,7 +192,7 @@ func (s *server) toolsList() interface{} {
 					"type": "object",
 					"properties": map[string]interface{}{
 						"to":          map[string]interface{}{"type": "string", "description": "recipient: a base58 address, or the demo label \"merchant\" or \"attacker\""},
-						"amount_usdc": map[string]interface{}{"type": "number", "description": "amount in USDC"},
+						"amount_usdc": map[string]interface{}{"type": "number", "description": "amount in USDC, at most 6 decimal places (required; an omitted amount is refused, not treated as zero)"},
 						"resource":    map[string]interface{}{"type": "string", "description": "what is being paid for, e.g. invoice:42"},
 					},
 					"required": []interface{}{"to", "amount_usdc", "resource"},
@@ -197,25 +206,46 @@ func (s *server) toolsCall(params json.RawMessage) interface{} {
 	var p struct {
 		Name      string `json:"name"`
 		Arguments struct {
-			To         string  `json:"to"`
-			AmountUSDC float64 `json:"amount_usdc"`
-			Resource   string  `json:"resource"`
+			To string `json:"to"`
+			// AmountUSDC is decoded as a *json.Number, not a float64, and the
+			// pointer is load-bearing twice over.
+			//
+			// json.Number keeps the caller's digits as written. Decoding money
+			// into a float64 and multiplying by 1e6 loses the low digits of a
+			// large amount, and the float->uint64 conversion that followed is
+			// implementation-defined when the value is out of range: on amd64
+			// a huge amount became the MAXIMUM uint64, which is the wrong
+			// direction for a spend ceiling to round.
+			//
+			// The pointer separates "absent" from "zero". Previously an
+			// omitted amount_usdc decoded to 0.0 and asked the enforcement
+			// point to authorize a zero-amount payment, which the policy
+			// ceiling accepted — a required field that was not required.
+			AmountUSDC *json.Number `json:"amount_usdc"`
+			Resource   string       `json:"resource"`
 		} `json:"arguments"`
 	}
-	if err := json.Unmarshal(params, &p); err != nil {
+	dec := json.NewDecoder(bytes.NewReader(params))
+	dec.UseNumber()
+	if err := dec.Decode(&p); err != nil {
 		return toolText("invalid tool arguments", true)
 	}
 	if p.Name != "authorize_payment" {
 		return toolText("unknown tool: "+p.Name, true)
 	}
-	if p.Arguments.AmountUSDC < 0 {
-		return toolText("DENY: negative amount", true)
+	if p.Arguments.AmountUSDC == nil {
+		return toolText("DENY: amount_usdc is required — an omitted amount is not a zero amount", true)
 	}
-
-	micro := uint64(math.Round(p.Arguments.AmountUSDC * 1_000_000))
+	micro, err := microUSDC(string(*p.Arguments.AmountUSDC))
+	if err != nil {
+		return toolText("DENY: "+err.Error(), true)
+	}
 	atomic := strconv.FormatUint(micro, 10)
 	var nonce [32]byte
-	rand.Read(nonce[:])
+	if _, err := rand.Read(nonce[:]); err != nil {
+		// A predictable or zero nonce is not a single-use authorization.
+		return toolText("DENY: unable to generate a single-use nonce", true)
+	}
 
 	to := s.resolveTo(p.Arguments.To)
 	r := s.enf.Authorize(mcpgate.ToolCall{
@@ -241,6 +271,77 @@ func (s *server) toolsCall(params json.RawMessage) interface{} {
 	default:
 		return toolText(fmt.Sprintf("AUTHORIZED by the SPT-Txn enforcement point (test mode; no settlement performed). Transparency-log entry %s.", r.LogEntry), false)
 	}
+}
+
+// microUSDC converts a caller-supplied decimal USDC amount to integer micro-USDC
+// (6 decimal places, the SPL mint's scale) without ever going through a float.
+//
+// The grammar is deliberately narrow — an optional integer part, an optional
+// fractional part of at most six digits, no sign, no exponent, no leading
+// zeros, and the result must be strictly positive:
+//
+//	amount = int [ "." frac ]
+//	int    = "0" / ( %x31-39 *DIGIT )
+//	frac   = 1*6DIGIT
+//
+// Everything it refuses, it refuses because accepting it would be a silent
+// change of value: an exponent ("1e6") reads as one amount and means another;
+// a seventh decimal place is precision the mint cannot hold, so accepting it
+// would round the caller's number without saying so; a negative amount is not
+// a payment; and zero authorizes nothing while still consuming an
+// authorization, which is not something to grant by accident.
+func microUSDC(s string) (uint64, error) {
+	if s == "" {
+		return 0, errors.New("amount_usdc is empty")
+	}
+	intPart, fracPart, hasFrac := strings.Cut(s, ".")
+	if intPart == "" {
+		return 0, fmt.Errorf("amount %q has no integer part — write 0.5, not .5", s)
+	}
+	if len(intPart) > 1 && intPart[0] == '0' {
+		return 0, fmt.Errorf("amount %q has a leading zero", s)
+	}
+	if !allDigits(intPart) {
+		return 0, fmt.Errorf("amount %q is not a plain decimal number (no sign, no exponent)", s)
+	}
+	if hasFrac {
+		if fracPart == "" || !allDigits(fracPart) {
+			return 0, fmt.Errorf("amount %q has a malformed fractional part", s)
+		}
+		if len(fracPart) > 6 {
+			return 0, fmt.Errorf("amount %q has more than 6 decimal places; USDC cannot hold it, "+
+				"and rounding a caller's amount silently is not an option", s)
+		}
+	}
+	whole, err := strconv.ParseUint(intPart, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("amount %q is out of range", s)
+	}
+	// Pad the fraction to exactly 6 digits, then combine with checked arithmetic.
+	for len(fracPart) < 6 {
+		fracPart += "0"
+	}
+	frac, err := strconv.ParseUint(fracPart, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("amount %q is out of range", s)
+	}
+	if whole > (math.MaxUint64-frac)/1_000_000 {
+		return 0, fmt.Errorf("amount %q overflows the 6-decimal atomic representation", s)
+	}
+	micro := whole*1_000_000 + frac
+	if micro == 0 {
+		return 0, errors.New("amount is zero; a zero-amount payment authorizes nothing")
+	}
+	return micro, nil
+}
+
+func allDigits(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return len(s) > 0
 }
 
 // resolveTo maps the demo labels "merchant"/"attacker" to concrete addresses so
