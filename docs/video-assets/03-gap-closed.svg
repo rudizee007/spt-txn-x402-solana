@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <marker id="a1" viewBox="0 0 12 12" refX="10" refY="6"
+            markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L12 6 L0 12 z" fill="#7D848E"/>
+    </marker>
+    <marker id="a2" viewBox="0 0 12 12" refX="10" refY="6"
+            markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L12 6 L0 12 z" fill="#3FB950"/>
+    </marker>
+    <marker id="a3" viewBox="0 0 12 12" refX="10" refY="6"
+            markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L12 6 L0 12 z" fill="#E5484D"/>
+    </marker>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#1E1F21"/>
+
+  <text x="960" y="150" text-anchor="middle"
+        font-family="'Space Mono','IBM Plex Mono',monospace" font-size="58"
+        fill="#BAD7FF">SPT-Txn asks the other one.</text>
+
+  <!-- agent -->
+  <rect x="110" y="430" width="300" height="140" rx="10" fill="#26282B" stroke="#3A3D42" stroke-width="3"/>
+  <text x="260" y="495" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="36" fill="#EEEFF1">AI AGENT</text>
+  <text x="260" y="538" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="24" fill="#7D848E">holds a bound token</text>
+
+  <line x1="430" y1="500" x2="640" y2="500" stroke="#7D848E" stroke-width="4" marker-end="url(#a1)"/>
+
+  <!-- the gate -->
+  <rect x="660" y="390" width="420" height="220" rx="10" fill="#1A2230" stroke="#BAD7FF" stroke-width="4"/>
+  <text x="870" y="452" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="34" fill="#BAD7FF">SPT-Txn</text>
+  <text x="870" y="500" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="26" fill="#EEEFF1">one asset &#183; one amount</text>
+  <text x="870" y="536" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="26" fill="#EEEFF1">one recipient</text>
+  <text x="870" y="580" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="24" fill="#7D848E">verified offline &#183; no call home</text>
+
+  <!-- authorized branch -->
+  <path d="M1080 460 H1300 V330" fill="none" stroke="#3FB950" stroke-width="4" marker-end="url(#a2)"/>
+  <rect x="1330" y="255" width="470" height="140" rx="10" fill="#14251A" stroke="#3FB950" stroke-width="3"/>
+  <text x="1565" y="315" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="34" fill="#EEEFF1">AUTHORIZED</text>
+  <text x="1565" y="358" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="26" fill="#3FB950">USDC settles on devnet</text>
+
+  <!-- refused branch -->
+  <path d="M1080 540 H1300 V670" fill="none" stroke="#E5484D" stroke-width="4" marker-end="url(#a3)"/>
+  <rect x="1330" y="605" width="470" height="140" rx="10" fill="#2A1618" stroke="#E5484D" stroke-width="3"/>
+  <text x="1565" y="665" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="34" fill="#EEEFF1">HIJACKED</text>
+  <text x="1565" y="708" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="26" fill="#E5484D">refused before signing</text>
+
+  <text x="960" y="880" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="40" fill="#EEEFF1">A compromised agent holds a token that is useless for anything else.</text>
+
+  <text x="960" y="960" text-anchor="middle" font-family="'Space Mono','IBM Plex Mono',monospace"
+        font-size="28" fill="#7D848E">Every decision emits a signed receipt &#8212; evidence as a byproduct of enforcement.</text>
+</svg>

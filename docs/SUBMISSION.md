@@ -4,13 +4,39 @@ Copy-paste reference for the Eternal portal. Items still to supply are marked
 **TODO**. All three repos below were confirmed publicly reachable, signed out,
 on 2026-08-04.
 
-Colosseum asks for **two** videos at submission, not one: a **pitch
-presentation (max 3 minutes)** covering team, problem, audience, any user
-validation and the vision, and a **technical walkthrough (under 3 minutes)**
-covering implementation, design choices, stack and the Solana integration. The
-weekly updates are separate and go in the Eternal dashboard. A repo may be
-private if judges are granted access — that is an explicitly supported route,
-and forgetting to grant it is on their list of common mistakes.
+## Video requirements — read from the actual form, 2026-08-22
+
+The earlier note here ("pitch max 3 min, technical walkthrough under 3 min") was
+wrong. Verbatim from the Eternal product form:
+
+| Field | Cap | Brief |
+|---|---|---|
+| **Demo video** (required) | **3:00** | *"Should show the live product, not a slide deck, not a code walkthrough."* |
+| **Pitch video** (required, PUBLIC) | **2:00** | *"Introduce yourselves, tell us what you're building, and tell us why you're the people to build it. Nothing fancy required. We're interested in how you think and communicate."* |
+
+Weekly updates are separate, live in the Eternal dashboard, and Colosseum's own
+page specifies **1 minute** each.
+
+A repo may be private if judges are granted access via hackathon@colosseum.com —
+an explicitly supported route, and forgetting to grant it is on their list of
+common mistakes. Ours are public, so this does not apply.
+
+## Status — 2026-08-22
+
+**Deadline: 24 August, 6:01 PM EST.**
+
+| Item | State |
+|---|---|
+| Week 1–3 updates | Done, in dashboard |
+| Week 4 update (1 min) | https://youtu.be/cYbHxNoZHGI |
+| **Pitch video (2 min)** | https://youtu.be/-I6ZQ6C7sms |
+| **Demo video (3 min)** | **OUTSTANDING** — script in `DEMO-SCRIPT.md`, cut beat 3 |
+| Project info (step 1/3) | Name, description, website, category, technologies — drafted |
+| Media and code (step 2/3) | Repo + context + links — drafted |
+| Team (step 3/3) | Not started |
+| Team profiles complete | Shows unticked on dashboard — verify |
+
+Check every YouTube link is **Public or Unlisted, never Private** before pasting.
 
 ## One-liner
 
