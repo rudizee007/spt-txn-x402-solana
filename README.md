@@ -40,11 +40,16 @@ it signs anything on Solana:
    guard** refuses to sign unless the transaction pays *exactly* the bound
    recipient / asset / amount under the payer's authority. Only then does it sign
    and settle on devnet.
-3. Every decision emits a **signed, hash-chained receipt**; the log's RFC 6962
-   Merkle root is anchored on-chain via the SPL Memo program — a tamper-evident
-   evidence trail, with no PII on the ledger.
+3. A decision that authorizes is recorded as a **signed, hash-chained log entry**
+   before anything settles — an ALLOW whose entry cannot be recorded does not
+   authorize. The log's RFC 6962 Merkle root is anchored on-chain via the SPL Memo
+   program — a tamper-evident evidence trail, with no PII on the ledger.
 
-Compliance evidence is a byproduct of enforcement, not an after-the-fact audit.
+Evidence is a precondition of enforcement, not an after-the-fact audit. Two limits,
+stated rather than glossed: a **denial** whose entry cannot be recorded is still
+returned, so denials are the one class that can be delivered unattested; and a log
+entry establishes ordering and integrity, not authority — these adapters do not
+emit the draft's Transaction Receipt.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and the diagram
 [`docs/architecture.svg`](docs/architecture.svg).
@@ -60,7 +65,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and the diagram
 | HTTP x402 flow (real `402` + `X-PAYMENT` round-trip) | **Built & tested** |
 | Pre-sign `TransferChecked` guard | **Built & tested** |
 | **USDC** settlement on **devnet** | **Built & proven on devnet** |
-| Signed receipts + RFC 6962 Merkle log | **Built & tested** |
+| Signed transparency log + RFC 6962 Merkle root | **Built & tested** |
 | On-chain evidence anchor (Merkle root via SPL Memo) | **Built & proven on devnet** |
 | Gateway / PEP middleware (drop-in x402 authorization) | **Built & tested** |
 | Transparency-log service (receipts as an HTTP API) | **Built & tested** |
@@ -152,8 +157,8 @@ refuse to "pay" someone but will happily check whether a payment is authorized:
 >
 > *"…check whether paying 1000 USDC to <attacker address> is authorized"* → **DENY**
 
-A prompt-injected tool-call is cryptographically refused, with a signed receipt
-on every decision.
+A prompt-injected tool-call is cryptographically refused, and each decision that
+can be recorded is written to the signed, hash-chained log.
 
 By default the ALLOW authorizes only (no funds move). Build with `-tags devnet`
 to perform a real devnet USDC transfer on ALLOW — uses your keypair, with an
@@ -168,17 +173,22 @@ go build -tags devnet -o bin/spt-txn-mcp ./cmd/mcp-gateway
 ## Repository layout
 
 ```
-gate/       Off-chain x402 authorization gate (Go): fixed-width intent binding +
-            ALLOW/DENY decision. No Solana SDK in this path.
 settle/     Pre-sign TransferChecked guard + the real SPL/USDC transfer builder.
-receipt/    Signed receipts + RFC 6962 Merkle log (tamper-evident evidence).
-gateway/    Drop-in x402 authorization (PEP) middleware + transparency-log service.
-mcpgate/    MCP policy-enforcement profile: authorize AI-agent tool-calls on the
-            same gate + receipt core (no new trust-boundary code).
+escrow/     On-chain escrow client.
+onchain/    On-chain program interfaces.
 demo/       In-process and HTTP x402 loops used by the demos.
 cmd/        demo, x402demo, gateway, mcp-demo (offline); mcp-gateway (stdio MCP
-            server; -tags devnet settles real USDC); paydevnet, anchordevnet.
-docs/       Spec (SPEC-X402), architecture, build plan, monetization, sprint plan.
+            server; -tags devnet settles real USDC); paydevnet, anchordevnet,
+            escrowdevnet.
+docs/       Spec (SPEC-X402), architecture, build plan, sprint plan.
+
+The enforcement core is NOT in this repository. `gate` (the ALLOW/DENY decision
+and intent binding), `translog` (the signed, hash-chained log — named `receipt`
+until v0.2.0, renamed because it is a transparency-log entry and not the draft's
+Transaction Receipt), `gateway` (the HTTP PEP) and `mcpgate` (the MCP profile)
+all live in the zero-dependency module `github.com/rudizee007/spt-txn-pep`, which
+this repo consumes. They were extracted there on 2026-07-29 so that adopting the
+middleware does not drag a blockchain SDK into the adopter's dependency graph.
 ```
 
 ## Design invariants (non-negotiable)
