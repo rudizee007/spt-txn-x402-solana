@@ -246,8 +246,12 @@ func (c *HTTPClient) Pay(url string, token gate.Token, now time.Time, tamper boo
 
 	// 2. Gate: ALLOW / DENY before signing.
 	d := gate.Evaluate(c.acc.allowlist(), req, token, ScopePolicy{scope: c.scope}, c.spend, now)
-	// Evidence as a byproduct: every decision emits a signed, chained receipt.
-	_, _ = c.receipts.Append(c.rkey, translog.Decision(d.Class), d.Binding, now.Unix())
+	// Evidence is a PRECONDITION, not a byproduct — see Client.Pay, including its
+	// limits: in-memory only, silent on the DENY path, and — on the ALLOW path only
+	// — the nonce already spent by the time this runs.
+	if _, err := c.receipts.Append(c.rkey, translog.Decision(d.Class), d.Binding, now.Unix()); err != nil && d.Class == gate.Allow {
+		return Outcome{Decision: gate.DenyUnavailable, Reason: "decision not recorded; this authorization is spent"}, nil
+	}
 	if d.Class != gate.Allow {
 		return Outcome{Decision: d.Class, Reason: d.Reason}, nil
 	}

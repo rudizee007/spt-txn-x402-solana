@@ -221,8 +221,28 @@ func (c *Client) Pay(server *ResourceServer, token gate.Token, now time.Time, ta
 
 	// Gate: ALLOW/DENY before signing.
 	d := gate.Evaluate(c.acc.allowlist(), req, token, ScopePolicy{scope: c.scope}, c.spend, now)
-	// Evidence as a byproduct: every decision emits a signed, chained receipt.
-	_, _ = c.receipts.Append(c.rkey, translog.Decision(d.Class), d.Binding, now.Unix())
+	// Evidence is a PRECONDITION, not a byproduct: a decision that cannot be
+	// recorded does not authorize a payment. A denial stays a denial on the same
+	// failure, so the evidence path can never be broken to stop this client
+	// refusing.
+	//
+	// Read "recorded" narrowly. receipts is an IN-MEMORY translog; this performs no
+	// I/O and is not a durability guarantee. Persistence is a separate SaveReceipts
+	// that runs later, if at all, so an entry that exists here can still be lost --
+	// and an ALLOW entry does not imply a transfer, since the settle-guard below can
+	// still abort -- and it is not the only post-append abort: a bad price, a
+	// settle rejection or (over HTTP) a transport or non-200 failure all return
+	// non-paid after the entry is committed, and the bad-price path reports
+	// DenyViolation while the chain already holds Allow for that binding.
+	//
+	// Two further limits: a failed append on the DENY path is silent (no alarm hook
+	// exists here, unlike spt-txn-pep's gateway.PEP); and ON THE ALLOW PATH ONLY the
+	// nonce has already been spent by gate.Evaluate, so that authorization is
+	// destroyed rather than deferred and the caller needs a fresh one. A binding
+	// error, expiry or policy denial does NOT spend the nonce -- deliberately.
+	if _, err := c.receipts.Append(c.rkey, translog.Decision(d.Class), d.Binding, now.Unix()); err != nil && d.Class == gate.Allow {
+		return Outcome{Decision: gate.DenyUnavailable, Reason: "decision not recorded; this authorization is spent"}
+	}
 	if d.Class != gate.Allow {
 		return Outcome{Decision: d.Class, Reason: d.Reason}
 	}
