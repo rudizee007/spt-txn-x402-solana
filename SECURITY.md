@@ -52,9 +52,9 @@ committing them would invite anchoring a stale root.
 
 ## Dependency and vulnerability audit status
 
-Last run **2026-08-03**, Go 1.25.12, `govulncheck` from
-`golang.org/x/vuln/cmd/govulncheck@latest` against the Go vulnerability
-database.
+Last run **2026-09-12**, Go **1.25.14** (the `toolchain` line in `go.mod`),
+`govulncheck` v1.7.0 against the Go vulnerability database. CI also runs
+`govulncheck` on every push to `main`, on the newest Go 1.25 patch release.
 
 The test suite passes and both scan configurations report **no reachable
 vulnerabilities**:
@@ -65,21 +65,40 @@ govulncheck ./...                   # No vulnerabilities found.
 govulncheck -tags devnet ./...      # No vulnerabilities found.
 ```
 
+**That result is a statement about the toolchain the scan ran with.** Go 1.25.12 —
+this repository's `toolchain` line before 2026-09-12 — has five standard-library
+advisories reachable from this repository's own code: the HTTP server in
+`cmd/gateway`, the HTTP client in `demo`, and the devnet drivers (GO-2026-5026,
+GO-2026-5972, GO-2026-6089, GO-2026-6090, GO-2026-6218). All five are fixed in Go
+1.25.13. A binary built with an older toolchain carries them regardless of what this
+section says. `go run` with a local Go older than the `toolchain` line downloads that
+toolchain; a newer local Go is used as it is.
+
 The `-tags devnet` run matters and is not optional. Every code path that handles
 a real key, builds a real transaction, or talks to a live RPC endpoint is behind
 that build tag. A clean scan that excluded exactly those files would be a claim
 about the code that does the least and says nothing about the code that does the
 most.
 
-### One module-level finding
+### Module-level findings
 
-`govulncheck -show verbose` reports a single result under **Module Results**,
-which means the vulnerable module is in the build graph but no vulnerable symbol
-is reachable from any entry point in this repository:
+`govulncheck -show verbose` reports four results under **Module Results**, the same
+four with and without `-tags devnet`. Each means the vulnerable module is in the build
+graph but no vulnerable symbol is reachable from any entry point in this repository.
+All four are in `golang.org/x/crypto@v0.54.0`, which reaches the build graph
+transitively through `github.com/gagliardetto/solana-go`:
 
-| Advisory | Module | Status |
-|---|---|---|
-| [GO-2026-5932](https://pkg.go.dev/vuln/GO-2026-5932) | `golang.org/x/crypto@v0.54.0`, package `openpgp` | Not imported, not reachable. |
+| Advisory | Package | Fixed in | Status |
+|---|---|---|---|
+| [GO-2026-6355](https://pkg.go.dev/vuln/GO-2026-6355) | `ssh` | `v0.56.0` | Not imported, not reachable. |
+| [GO-2026-6354](https://pkg.go.dev/vuln/GO-2026-6354) | `ssh` | `v0.56.0` | Not imported, not reachable. |
+| [GO-2026-6303](https://pkg.go.dev/vuln/GO-2026-6303) | `ssh` | `v0.55.0` | Not imported, not reachable. |
+| [GO-2026-5932](https://pkg.go.dev/vuln/GO-2026-5932) | `openpgp` | N/A | Not imported, not reachable. |
+
+Nothing in this repository imports `golang.org/x/crypto/ssh`. The three `ssh`
+advisories have fixes in newer `golang.org/x/crypto` releases; the module version is
+chosen by the dependency graph, and raising it would be a separate change that has not
+been made.
 
 `golang.org/x/crypto/openpgp` is deprecated and unmaintained — unsafe by design
 rather than carrying a specific exploitable defect — and its advisory records

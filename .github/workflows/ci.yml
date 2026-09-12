@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+# Every job installs the newest Go 1.25 patch release. go.mod's `toolchain` line is
+# what a local `go run` downloads, and it lags each new patch until it is bumped; CI
+# builds, tests and scans the standard library a current 1.25 build links.
 jobs:
   build-test:
     name: gofmt · vet · build · test
@@ -17,8 +20,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          check-latest: false
+          go-version: '1.25.x'
+          check-latest: true
 
       # gofmt -l lists offending files but exits 0, so it must be asserted
       # explicitly. Two files here had drifted unnoticed precisely because
@@ -43,8 +46,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          check-latest: false
+          go-version: '1.25.x'
+          check-latest: true
       - name: govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@v1.1.4

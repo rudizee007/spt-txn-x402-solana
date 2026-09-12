@@ -2,7 +2,7 @@ module github.com/rudizee007/spt-txn-x402-solana
 
 go 1.25.0
 
-toolchain go1.25.12
+toolchain go1.25.14
 
 require (
 	github.com/gagliardetto/solana-go v1.22.0
