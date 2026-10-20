@@ -6,7 +6,7 @@ toolchain go1.25.14
 
 require (
 	github.com/gagliardetto/solana-go v1.22.0
-	github.com/rudizee007/spt-txn-pep v0.5.0
+	github.com/rudizee007/spt-txn-pep v0.7.0
 )
 
 require (
